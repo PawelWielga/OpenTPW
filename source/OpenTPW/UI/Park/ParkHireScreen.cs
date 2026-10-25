@@ -59,6 +59,9 @@ internal sealed class ParkHireScreen : UiWindow
 	/// <summary>The picked candidate's skill, <c>0x2482</c>, set only as a row is picked (<c>0x401</c>).</summary>
 	private readonly ParkObjectWindow.UiStatBar _skill;
 
+	/// <summary>The skill bar's inset from its rectangle's top and bottom (<c>FUN_00485e30( bar, 0, 10 )</c>).</summary>
+	private const int BarInset = 10;
+
 	/// <summary>A grade as the skill bar is handed it, <c>((grade &amp; 0xff) &lt;&lt; 10) / 5</c> of 1024 (<c>0x0049b8dc</c>).</summary>
 	internal static int SkillUnits( int grade ) => ((grade & 0xff) << 10) / 5;
 
@@ -134,7 +137,8 @@ internal sealed class ParkHireScreen : UiWindow
 
 		// Who is selected, and their skill. The bar 0x2482 is built at nought (0x0049c335) and set only as a
 		// row is picked (message 0x401, 0x0049b8f8), to (grade << 10) / 5 - so even a top-grade candidate fills
-		// only four fifths of it. That is the original's arithmetic, not a bug.
+		// only four fifths of it. That is the original's arithmetic, not a bug. Its skin stands in 10 from the
+		// stream's (722, 536)-(957, 575) top and bottom (FUN_00485e30( bar, 0, 10 ), 0x0049c2ef).
 		var info = Root.Add( new UiControl
 		{
 			Id = 0x2481,
@@ -145,7 +149,7 @@ internal sealed class ParkHireScreen : UiWindow
 		_skill = info.Add( new ParkObjectWindow.UiStatBar
 		{
 			Id = 0x2482,
-			Rect = new UiRect( 722, 536, 957, 575 ),
+			Rect = new UiRect( 722, 536 + BarInset, 957, 575 - BarInset ),
 			Known = true
 		} );
 

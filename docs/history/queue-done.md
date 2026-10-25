@@ -10114,6 +10114,15 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   "Ctrl is held, so another is still in the hand" for 650 each; the ride's put-down "laying queue for thing 45"; no
   clone counted (`q635/PREDICTION.txt`, `side-by-side.png`). Two runs void and three checks missed on the scripts' own
   faults, recorded there.
+- [x] **Q636. The hire screen's skill meter is thicker than the original's.** From Alexah's play test, 2026-10-21 (note
+  19). The bar is control `0x2e8`, (1376,235)-(1592,274), 40 tall, 154 down a row (`hud.md:750`); built (`STATUS.md:27`,
+  `hud.md:2719`); our height is not measured (inferred). Measure it on a frame against 40 virtual units and the
+  original's, then correct. Confirm: the hire screen beside the original's.
+  **Done 2026-10-25.** The hire screen's bar is `0x2482`, (722,536)-(957,575); `0x2e8` is the training screen's, which
+  takes no inset and was right. The hire builder calls `FUN_00485e30( bar, 0, 10 )` at `0x0049c2ef`, so the original
+  draws the bar (722,546)-(957,565), read live from its control's `+0x30` and its skin (`hud.md`, "The skill bar
+  `0x2482`"); ours drew the whole 39 and now stands in 10 (`ParkHireScreen.BarInset`). Confirmed: the original's frame
+  lights rows 273-282 at 768, ours 256-264 at 720 down three columns (main's 251-269); `q636/side-by-side.png`.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

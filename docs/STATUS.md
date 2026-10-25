@@ -31,17 +31,15 @@ One line per system; the detail, item by item, is `docs/WORKS.md` (grep it by ar
 
 ## Next
 
-`docs/QUEUE.md`, from the top; every ticked item is in `docs/history/queue-done.md`. Next Q636 (the hire screen's skill meter; Q633, waiting on Alexah, above it; Q543 and Q27, ordered before Q631, and Q31b, Q25, Q51 and Q55, ordered earlier, stand lower in the file): Alexah's play test of 2026-10-21 put Q616 to Q645 first, the display, then what a player hits, then the chosen improvements (`playtest-2026-10-21/notes.md`); Q598 (every clip's scale track posed) follows them in section A (Q609, the advisor's row 19 that Q602 decoded, and Q587 to Q589, the karts' and the water ride's build, are filed after it; Q586 stood above the ordered block; Q608, the draws left both-sided, is filed after Q713): the queue was reordered at Alexah's word, 2026-10-20. Q92 evidence and status limitations are in `docs/exe/ride-window-door.md`. Q91b hoarding implementation and evidence are in `docs/exe/ride-hoardings.md`. Q85b's implementation and evidence are in `docs/exe/guest-arrivals.md`. Gaps 4 and 7: `docs/PLAYER-GAPS.md`. Q13 is done: `docs/history/CLEANUP-PLAN.md`.
+`docs/QUEUE.md`, from the top; every ticked item is in `docs/history/queue-done.md`. Next Q637 (the gadget's aerial; Q633, waiting on Alexah, above it; Q543 and Q27, ordered before Q631, and Q31b, Q25, Q51 and Q55, ordered earlier, stand lower in the file): Alexah's play test of 2026-10-21 put Q616 to Q645 first, the display, then what a player hits, then the chosen improvements (`playtest-2026-10-21/notes.md`); Q598 (every clip's scale track posed) follows them in section A (Q609, the advisor's row 19 that Q602 decoded, and Q587 to Q589, the karts' and the water ride's build, are filed after it; Q586 stood above the ordered block; Q608, the draws left both-sided, is filed after Q713): the queue was reordered at Alexah's word, 2026-10-20. Q92 evidence and status limitations are in `docs/exe/ride-window-door.md`. Q91b hoarding implementation and evidence are in `docs/exe/ride-hoardings.md`. Q85b's implementation and evidence are in `docs/exe/guest-arrivals.md`. Gaps 4 and 7: `docs/PLAYER-GAPS.md`. Q13 is done: `docs/history/CLEANUP-PLAN.md`.
 
 ## Not verified on screen
 
 Only the item just landed is here. Every earlier item's account is in `docs/history/not-verified.md`, newest first, moved there by the pre-commit hook: grep it by Q-number.
 
-- Q635 (Ctrl+click, decode only): the original off-screen, the stock park, Instant Action: the Belly Bounce cloned and put
-  down twice over two loads, the Drinks Shop cloned and put down with Ctrl held and then plain, a dearer clone refused at
-  a held bank of 50; ours on the desktop, main's build, the same clicks. Not looked at: the refusal's sound by ear or the
-  disk driver (caught by its call alone), a clone's turn on a thing not at 0, a mystery ride's clone, Full Simulation
-  (the arm asks no game mode), Ctrl with Shift or Alt.
+- Q636 (the hire screen's skill bar): the original off-screen and ours on the desktop, the stock park's hire screen
+  opened by real clicks, its first row picked. Not looked at: Full Simulation (the builder asks no game mode), a window
+  other than 1280 x 720, the bar at nought or full, the inset helper's other 31 callers (not swept).
 
 
 
@@ -53,8 +51,8 @@ Only the item just landed is here. Every earlier item's account is in `docs/hist
 | | | measured |
 |---|---|---|
 | Opcodes | **78** of 106 | 2026-10-20, Q553 (`FADEOBJ`), `case Opcode.` labels vs enum members |
-| Tests | **3919**, 0 fail, 0 skip with the game | 2026-10-25, run 9 review fix F, alone in a worktree |
-| Tests without the game | **1395** ran, **2524** skipped, of 3919 | 2026-10-25, run 9 review fix F, alone in a worktree |
+| Tests | **3920**, 0 fail, 0 skip with the game | 2026-10-25, Q636, alone in a worktree |
+| Tests without the game | **1395** ran, **2525** skipped, of 3920 | 2026-10-25, Q636, alone in a worktree |
 | Build warnings | 121 in the main tree; 131 in a fresh worktree, the ten more NuGet's advisories on ModKit's ImageSharp | 2026-10-10 (the worktree's 131 and the main tree's 121 at Q340, the worktree's 131 and the main tree's 121 again at Q343, at Q344 and at Q345, and the worktree's 131 at Q346 and, with the main tree's 121, at Q347, at Q348, at Q349, at Q351 and at Q352, 2026-10-13) |
 | Park load | **2.5 s**, worst phase `terrain` 0.72 s | 2026-09-21, three jungle runs |
 

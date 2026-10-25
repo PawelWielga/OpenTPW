@@ -754,6 +754,21 @@ public class ParkListScreenRewriteTests
 	}
 
 	/// <summary>
+	/// <b>The hire screen's skill bar stands in 10 from its rectangle's top and bottom</b>, (722, 546)-(957, 565) of the
+	/// stream's (722, 536)-(957, 575) (<c>FUN_00485e30( bar, 0, 10 )</c> at <c>0x0049c2ef</c>; the original's skin
+	/// keeps that rect, read live by <c>q636/orig/read.py</c>), and the "Skill" label beside it keeps the whole row.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> no inset; an inset of 8; the inset across rather than down; the label inset too.</remarks>
+	[TestMethod]
+	public void TheHireScreensSkillBarStandsInTenFromItsRowsTopAndBottom()
+	{
+		var info = new ParkHireScreen( stack ).Root.Children.Single( child => child.Id == 0x2481 );
+
+		Assert.AreEqual( new UiRect( 722, 546, 957, 565 ), info.Children.Single( child => child.Id == 0x2482 ).Rect, "the bar" );
+		Assert.AreEqual( new UiRect( 283, 536, 679, 575 ), info.Children.Single( child => child.Id == 0x2483 ).Rect, "the label" );
+	}
+
+	/// <summary>
 	/// <b>The visitors, hire, buy, all-staff and all-items rows are lettered in font 7</b>, the visitors' 0x38 tall
 	/// (<c>FUN_004938c0</c>) and the others' as tall as their factories measure font 7 (<c>FUN_0049bbb0</c>,
 	/// <c>FUN_004ad240</c>, <c>0x00496c10</c>, <c>FUN_004944d0</c>; <c>docs/exe/hud.md</c>, "The rows' font and height").

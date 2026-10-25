@@ -86,10 +86,6 @@ filed the items that cite it.
   picks up the path tool, as the original's does (`0x00524a63`). What did you see? (a) right after placing a ride, the
   squares or pointer looked like the path tool's; (b) after a click the queue tool was gone and further clicks laid path;
   (c) path pieces appeared where you laid queue; (d) something else - please describe.
-- [ ] **Q636. The hire screen's skill meter is thicker than the original's.** From Alexah's play test, 2026-10-21 (note
-  19). The bar is control `0x2e8`, (1376,235)-(1592,274), 40 tall, 154 down a row (`hud.md:750`); built (`STATUS.md:27`,
-  `hud.md:2719`); our height is not measured (inferred). Measure it on a frame against 40 virtual units and the
-  original's, then correct. Confirm: the hire screen beside the original's.
 - [ ] **Q637. The gadget's red aerial jumps between positions where the original animates it.** From Alexah's play test,
   2026-10-21 (note 24). A documented deviation with no queue line: the top and the later tags are put down at once,
   where the original plays them down by streams `0x007502f0` and `0x00752e48` (`advisor-park.md:836, :841, :891`;

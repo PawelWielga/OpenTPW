@@ -3602,6 +3602,16 @@ activities' names and counted `STAFF_STATUS_TEXT` five times.
 message `0x401` with a row picked (`0x0049b8c6`; the only other `PUSH 0x2482` is the builder's): `((grade & 0xff) <<
 10) / 5` of 1024 (`0x0049b8dc`), the grade the candidate record's byte `+8`. A grade 4 fills four fifths.
 
+**It is drawn 10 in from its rectangle's top and bottom** (Q636): the builder calls `FUN_00485e30( bar, 0, 10 )` at
+`0x0049c2ef`, before it hands the bar its skin. That helper writes the control's second rectangle, `+0x30` (four
+shorts), the one the generic layout hands a control's skin with flag `0x10` (`0x0065cd55`; the control's text is
+handed `+0xc`); the skin's fit (`UiControl_FitMatrix`, `FUN_00476c50`) maps its 0 to 100 box onto that rectangle
+whole. So the bar stands (722, 546)-(957, 565), 19 tall, centred in the 39 of the stream and of the "Skill" label
+beside it. **Measured** (`q636/orig/read.py` on the running original, the stock park's hire screen): the control's
+`+0xc` (722, 536, 957, 575), its `+0x30` and its skin's kept rectangle (`+0x18`) (722, 546, 957, 565), the label's
+`+0x30` its own (283, 536, 679, 575); the frame lights rows 273 to 282 at 1024 by 768. The training screen's bars
+(`0x2e8`, the same 39 and the same skin) are given no inset and fill theirs.
+
 **The walk is corroborated three ways**: the tab help rows, the resolved mesh names, and each screen's
 own tab-index switch all give the same ordering, and it matches UITEXT 119–122 and 139–143.
 

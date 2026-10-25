@@ -5,6 +5,11 @@ newest first. The pre-commit hook (`tools/status-sweep.py`) moves an item's acco
 written above it. **Grep it by Q-number; never read it whole.** Each account is frozen at its item's date: a
 later item may have run what an earlier one lists as untested.
 
+- Q635 (Ctrl+click, decode only): the original off-screen, the stock park, Instant Action: the Belly Bounce cloned and put
+  down twice over two loads, the Drinks Shop cloned and put down with Ctrl held and then plain, a dearer clone refused at
+  a held bank of 50; ours on the desktop, main's build, the same clicks. Not looked at: the refusal's sound by ear or the
+  disk driver (caught by its call alone), a clone's turn on a thing not at 0, a mystery ride's clone, Full Simulation
+  (the arm asks no game mode), Ctrl with Shift or Alt.
 - Q634 (the pointer drawn last): ours on the desktop, the stock park paused, the Drinks Shop's and the Belly Bounce's
   windows with the preview held and the pointer on its model, main's build as the control; the original off-screen at
   800 x 600, the same two windows. Not looked at: the pointer over the advisor (the same order puts it on top, not
