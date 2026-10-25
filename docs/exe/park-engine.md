@@ -1842,23 +1842,26 @@ cell's object found, `GetAsyncKeyState( 0x11 )` (`0x00487ac0`) (`VK_CONTROL`, ei
 
 **What happens at the put-down** is `FUN_00524960`'s, whose third argument is the modifier word (Ctrl alone is `0xC`;
 "The commit hands the player the queue tool"): a thing with **no queue** stays in the hand under Ctrl alone
-(`0x005253b8`; the add-on arm the same at `0x00524d6d`, the move's at `0x005259e2`), and a thing **with a queue** always hands the player the
+(`0x005253b8`; the move's at `0x005259e2`; the add-on arm at `0x00524d6d` also keeps the tool, but always resets the rotation -
+`je 0x005259fc` lands on the reset call `0x0052f1b0`, as the path without Ctrl does; by the listing, not run), and a thing **with a queue** always hands the player the
 queue tool (`FUN_0052f580( 3, 0 )`), Ctrl or not, so a ride is never placed twice in a row; Ctrl there keeps only the
-rotation (`0x005259fa`). A right click puts the queue tool away (measured below), so a second ride is a second
+rotation (`0x005259fa`). A right click puts the queue tool away (`q635/orig/b-run.out` 1-6-rclick and `c2-run.out` 6-rclick, tool 3 to 0; `b-run.out`
+2-6-rclick, tool 4 to 0, was a right click on a held ride, the Belly Bounce, item 1100, whose put-down 2-4 had not taken), so a second ride is a second
 Ctrl+click on a placed one.
 
 Measured in the original (`q635/orig/`, `PREDICTION.txt`; the stock park off-screen, the camera 470,270 125 180):
 Ctrl+click on the Belly Bounce (51,23), category 4, took the tool word `[0x0081ae2c]` from 0 to 4, the item
 `[0x008186e0]` to 1100 and the rotation `[0x0081d7a4]` to 0 (the Belly Bounce stands at 0, so the turn is read, not
 seen), with no window (`[0x007c2658]` 0) and the bank unmoved;
-the plain put-down on (48,31) took 88112 to 87612 and the tool to 3 (`c2-4-put.png`), and in a second load on (41,22)
-the same less the gate's takings. The Drinks Shop (43,30) Ctrl+clicked took item 1203; put down with Ctrl held on
+the plain put-down on (48,31), in a fresh load (`c2`), took 88112 to 87612 and the tool to 3 (`c2-4-put.png`), and in the
+first load (`b`) on (41,22) 88181 to 87701 (480; the bank also moves by tens between readings with nothing done, 88201 to 88181
+from 1-2 to 1-3, so 500 less the gate's takings is not the whole account). The Drinks Shop (43,30) Ctrl+clicked took item 1203; put down with Ctrl held on
 (45,23) the bank fell 650 and the tool stayed 4 with item 1203, and a plain put-down on (45,26) fell 650 again and put
 the tool away (`b-3-4-put-ctrl.png`, `b-3-5-put-plain.png`). With the bank held at 50 (`thingpoke.py`) the Ctrl+click
 left the tool at 0 and `brk.sh` caught `0x00487b56` once, `esi` 500, the Belly Bounce's price (`b-brk.log`).
 
 **OpenTPW** (main `e457475c`, `q635/run3`, five of five): the same Ctrl+click opens the Belly Bounce's window and
-leaves the hand empty (`Level.ClickWorldAt` has no Ctrl arm; nothing is counted); the put-down's half is built
+leaves the hand empty (`Level.ClickWorldAt` has no Ctrl arm; the click is counted `OBJECT_CLONE_CTRL_CLICK`); the put-down's half is built
 (`ParkBuilding.PlaceCarried`: the shop kept under Ctrl, "Ctrl is held, so another is still in the hand", 650 each; the
 Belly Bounce handing over the queue tool). The clone is Q672. Side by side: `q635/side-by-side.png`.
 
@@ -3589,7 +3592,8 @@ capacity and duration commit **byte-wide** where speed is a dword.
 **0x510** (map tool 0x36), whose "no area" sentinel is the pair (1, 0x4000) - the whole map.
 
 **Ctrl+click on a placed object does not open its window** - it buys another copy of the same item and
-puts it in the cursor.
+puts it in the cursor (when the bank covers the price, else the refusal sound; "Ctrl+click buys another of a placed thing",
+above, and Q672).
 
 #### The RIDE window, walked: `0x00755150`, 1536 bytes, 39 controls
 

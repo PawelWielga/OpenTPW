@@ -2716,6 +2716,11 @@ public class Level
 
 		if ( placed != 0 )
 		{
+			// The original's Ctrl+click here buys another of the thing instead of opening its window
+			// (docs/exe/park-engine.md, "Ctrl+click buys another of a placed thing"; Q672). Not built: the window opens.
+			if ( (Input.Held & Input.Modifiers.Control) != 0 )
+				Unimplemented.Report( "OBJECT_CLONE_CTRL_CLICK" );
+
 			OpenObjectWindow( placed );
 
 			return $"world click: opened the window for thing {placed}";

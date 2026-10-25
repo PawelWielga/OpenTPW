@@ -564,6 +564,37 @@ public class ParkLocatorTests
 	}
 
 	/// <summary>
+	/// <b>A Ctrl+click on a placed thing is counted as the original's clone, and still opens the window</b>
+	/// (<c>FUN_004879d0</c>, <c>docs/exe/park-engine.md</c>, "Ctrl+click buys another of a placed thing"; Q672). Without
+	/// Ctrl nothing is reported; with Ctrl, or Ctrl and Shift (the original asks <c>VK_CONTROL</c> alone), the click is
+	/// reported once and the ride's window opens as before.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the report removed; the report made on every click; Ctrl alone asked for.</remarks>
+	[TestMethod]
+	public void ACtrlClickOnAPlacedThingIsCountedAsTheUnbuiltClone()
+	{
+		typeof( Level ).GetProperty( nameof( Level.Kind ) )!.SetValue( Level.Current, Level.Scene.Park );
+		var window = () => _stack.Windows.OfType<ParkObjectWindow>().SingleOrDefault();
+		int Counted() => Unimplemented.Summary.Where( gap => gap.What == "OBJECT_CLONE_CTRL_CLICK" ).Sum( gap => gap.Times );
+
+		Unimplemented.Forget();
+		StringAssert.Contains( Level.Current!.ClickWorldAt( 51, 23, 0, 13 ), "opened the window for thing 13" );
+		Assert.AreEqual( 0, Counted(), "no Ctrl: nothing reported" );
+		_stack.Close( window()! );
+
+		Input.Keyboard = new Input.KeyboardInfo( new List<Key> { Key.ControlLeft } );
+		StringAssert.Contains( Level.Current.ClickWorldAt( 51, 23, 0, 13 ), "opened the window for thing 13" );
+		Assert.AreEqual( 1, Counted(), "Ctrl: reported once" );
+		_stack.Close( window()! );
+
+		Input.Keyboard = new Input.KeyboardInfo( new List<Key> { Key.ControlRight, Key.ShiftLeft } );
+		StringAssert.Contains( Level.Current.ClickWorldAt( 51, 23, 0, 13 ), "opened the window for thing 13" );
+		Assert.AreEqual( 2, Counted(), "Ctrl with Shift is still Ctrl" );
+		_stack.Close( window()! );
+		Input.Keyboard = new();
+	}
+
+	/// <summary>
 	/// <b>With the staff's locator open a click on the park arms no tool and opens no window</b> (<c>0x0048721c</c>): bare
 	/// ground (43,16), path (49,23), the Belly Bounce's anchor (51,23) and a guest all do nothing; a member under the pointer
 	/// still has their window. With it folded away the same ground arms the path tool, which (43,16), outside the park, refuses at once.
