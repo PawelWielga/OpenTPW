@@ -156,6 +156,33 @@ linked, end and death spawns, and each window's effects are drawn right after th
 **Any new on-screen effect for a window must pass its owner, or it draws over everything.** Do not
 "restore" the original order — that reintroduces the reported bug.
 
+### The key puff at park entry, and why ours draws none (Q630)
+
+`IslandLobby_LeaveForPark` (`0x005e1e30`) is three instructions: `+0x14 = 1`, a call of
+`IslandPanel_KeyPuffAndEnterSound` (`0x004b8fd0`), and a tail jump to `0x004b8ec0`, message 6 to the panel tree. So the
+puff starts while the panel is still up and the panel is hidden after it. `0x004b8fd0` returns at once for game type 2
+(`0x004b9028`); otherwise it reads the price control `0x1e0ea`'s rectangle and calls
+`FUN_00521e60( 98, 50000, 0, (top + (bottom - top) / 2) x 75000 / 1536 )` - the middle across, at the price's height -
+then `Sound_PlayEffect( 0, [0x00803a48], 4, 0, 0, 0 )`. It keeps no handle. The original's effects belong to no window,
+so the hide does not touch it.
+
+Measured, Lost Kingdom from the lobby as a Full Simulation player with two keys (`q630/`):
+
+| | the original (`orig-a`, the real screen) | ours (`run4`, the final build) |
+|---|---|---|
+| the emitter | `emitters.py`, 0.1 s after the click: slot 1, handle `0x20001`, effect 98 at (48, 0, 14), 28 then 32 particles | `particles screen`: slot 1, effect 98, 31 then 32 particles, owner `IslandPanel`, closed |
+| its life | none in use 1.0 s later; the key sparkle 97 dies with it | 8 particles at 1.0 s, none after |
+| on screen | a cloud of some thirty keys over the island, 0.2 to 1.0 s after the click | nothing. `windows` at 0.5 s: none |
+| the fade (Q61) | the frame mean 112.7 at the click, 106.5 at +4.3 s, 5.8 at +6.8 s | none: 102.5 to 109.2 to the loading screen |
+| the loading screen | +7.3 s; the turn onto the gate alone takes about 4 s | +3.0 to +3.8 s (Q670) |
+
+**Why ours draws none.** `IslandPanel.EnterPark` closes the panel (`Stack.Close( this )`) and then starts the puff with
+the panel as its owner. `ScreenParticles` draws an owned effect only while its window is open (the departure above), so
+the puff lives its second with nothing to be drawn with. A scratch build with no owner draws it, the same cloud
+(`q630/side-by-side.png`, `run2b`). Nothing is open in the stack from the Enter to the park, and Escape cancels the
+flight before it can open a menu, so an unowned puff cannot shine through a window the departure was made for. The fade
+starts some 3 s after the puff is gone, so it hides none of it. The build is Q669.
+
 ### Decisions taken without proof
 
 Particle density is no longer one of them: it comes from the detail file for the options' graphics quality, read at
@@ -572,7 +599,9 @@ over about 42 passes. **Not built** (`LOBBY_FLY_IN_FADE`, `docs/QUEUE.md` Q61).
 - Whether a lobby channel holds a once-clip's last frame (the end-of-clip rule reads `model+4 & 0x18`).
 - Which lobby mode the sibling camera class `0x00702dd0` serves. It runs the same state machine (`0x005e22d0` calls
   `0x005e0470` first) and its Enter opens a confirm dialog first (`0x005e26a0`, island `+0x70`).
-- Nothing here was observed in the running original.
+- The flight was filmed once in the running original (Q630, "The key puff at park entry" above): the turn onto the gate
+  takes about 4 s and the loading screen comes 7.3 s after the click, against the 3.1 s of flying in reckoned above;
+  ours reaches its loading screen in 3.0 to 3.8 s (Q670). The rest here was not observed.
 
 **OpenTPW.** `FrontEnd.MenuKey` leaves Escape to the game menu and to a modal window as the focus does, then asks
 `LobbyCameraMode.CancelLeave`, and opens the menu only if it did not answer; a cancel opens the island panel again,

@@ -2214,6 +2214,33 @@ public static class DebugConsole
 					break;
 				}
 
+				// `particles screen`: the on-screen effects instead, each with the window it was started for and whether
+				// that window is drawn now; ScreenParticles draws an owned effect only while its window is open.
+				if ( parts.Length > 1 && parts[1] == "screen" )
+				{
+					var stackNow = Level.Current?.Hud?.Children.OfType<UI.WindowStack>().FirstOrDefault();
+					var onScreen = 0;
+
+					for ( var slot = 0; slot < ParticleSystem.EmitterCount; ++slot )
+					{
+						var emitter = particleSystem.Emitters[slot];
+
+						if ( !emitter.Active || !emitter.Template.OnScreen )
+							continue;
+
+						++onScreen;
+
+						var ownedBy = emitter.Owner is not { } window ? "no window (drawn over all)"
+							: $"{window.GetType().Name}, " + (stackNow?.Windows.Contains( window ) != true ? "closed (not drawn)"
+								: window.Hidden ? "hidden (not drawn)" : window.PutAway ? "put away (not drawn)" : "open");
+
+						Reply( $"particles: screen slot {slot} effect {emitter.Effect} life {emitter.Lifetime} particles {emitter.Count} owner {ownedBy}" );
+					}
+
+					Reply( $"particles: {onScreen} on-screen emitters" );
+					break;
+				}
+
 				if ( parts.Length > 1 )
 				{
 					var cloudSlot = (int)Argument( 1 );

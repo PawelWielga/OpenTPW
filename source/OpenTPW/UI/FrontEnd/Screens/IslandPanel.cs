@@ -333,8 +333,11 @@ internal sealed class IslandPanel : UiWindow
 				var rect = _price.Rect;
 				var middle = ((rect.Bottom - rect.Top) >> 1) + rect.Top;
 
-				_ = particles.Spawn( (int)ParLib.P_EFFECT_KeyPuff, 50000, 0,
+				var puff = particles.Spawn( (int)ParLib.P_EFFECT_KeyPuff, 50000, 0,
 					middle * 75000 / VirtualScreen.Height, _price.Anchor, this );
+
+				Log.Info( $"Front end: key puff (effect 98) started, handle 0x{puff:x}, for the island panel, "
+					+ (Stack.Windows.Contains( this ) ? "open" : "closed") );
 			}
 		}
 

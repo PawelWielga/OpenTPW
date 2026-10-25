@@ -10030,6 +10030,19 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   589, 598 and stood tag 102 with the original's text (`ride-operation.md`, "Golden tickets"; `q629/side-by-side.png`).
   New: `original/ticketmeasures.py`; a recipe in `TOOLING.md`. Evidence `~/.cache/tpw-harnesses/q629/` (PREDICTION.txt
   9 held, 2 missed with their causes).
+- [x] **Q630. The key animation at park entry is not seen. Decode first.** From Alexah's play test, 2026-10-21 (note 2).
+  Built for Full Simulation from the lobby: effect 98 at the price
+  (`source/OpenTPW/UI/FrontEnd/Screens/IslandPanel.cs:325-337`; the original `lobby.md:55, :140-141, :531`, game type 0
+  only), yet nothing is seen. Inferred, not tested: the puff is owned by the island panel (`IslandPanel.cs:333-334`)
+  which message 6 hides at once (`lobby.md:274`), and owned effects hide with their window (`lobby.md:153`); the
+  original draws effects over every window (`lobby.md:148-157`). Test it (spawn count and the frame after) and Q61's
+  fly-in fade too. Confirm: a frame at entry in Full Simulation beside the original's.
+  - **Done (2026-10-25, decode and measure; no build).** The inference held: ours starts effect 98 (handle `0x20001`,
+    32 particles, about a second) owned by the island panel it has just closed, so `ScreenParticles` never draws it
+    (`particles screen`: "owner IslandPanel, closed (not drawn)"); the original starts the same emitter while its panel
+    is still up and draws it over everything, a cloud of keys (`emitters.py`; `q630/side-by-side.png`). A scratch build
+    with no owner draws the same cloud. Q61's fade starts 3 s after the puff has gone in the original and hides none of
+    it. `docs/exe/lobby.md`, "The key puff at park entry". The build is Q669; the flight's length, measured here, Q670.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

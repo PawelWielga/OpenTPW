@@ -5,6 +5,12 @@ newest first. The pre-commit hook (`tools/status-sweep.py`) moves an item's acco
 written above it. **Grep it by Q-number; never read it whole.** Each account is frozen at its item's date: a
 later item may have run what an earlier one lists as untested.
 
+- Q629 (a poor park's golden ticket measured; nothing changed): both games on Lost Kingdom's stock park played as Full
+  Simulation by a profile with no ticket, the original off-screen and ours on the desktop at 1280 x 720, one run of
+  each to the first award. Not looked at: Alexah's own park of the play test (no file of it was saved, nor its log), a
+  park made fresh and grown by a player (a bare one draws too few to reach 100 in under two hours), the original's
+  `0x137` and `0x13b` lines in this run (said there in Q707's), the other themes' thresholds, Instant Action (awards no
+  ticket in either game).
 - Q628 (the staff click range measured; the pick's circle taken in the original's 4:3 frame): the original
   off-screen and ours on the desktop at 1280 x 720, Lost Kingdom's stock park, one pair of staff each (Mike Man and
   Duke Mighten), the clock held. Not looked at: a window narrower than 4:3 and other wide shapes (the tests' 960 x 960

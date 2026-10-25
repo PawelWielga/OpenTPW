@@ -74,13 +74,6 @@ The review of the run of 2026-10-16/17 put Q444 to Q446 first (done; its finding
 The review of the run of 2026-10-17/18 (its findings are `~/.cache/tpw-harnesses/handoff/review3/`, `VERIFY-<n>.md`)
 filed the items that cite it.
 
-- [ ] **Q630. The key animation at park entry is not seen. Decode first.** From Alexah's play test, 2026-10-21 (note 2).
-  Built for Full Simulation from the lobby: effect 98 at the price
-  (`source/OpenTPW/UI/FrontEnd/Screens/IslandPanel.cs:325-337`; the original `lobby.md:55, :140-141, :531`, game type 0
-  only), yet nothing is seen. Inferred, not tested: the puff is owned by the island panel (`IslandPanel.cs:333-334`)
-  which message 6 hides at once (`lobby.md:274`), and owned effects hide with their window (`lobby.md:153`); the
-  original draws effects over every window (`lobby.md:148-157`). Test it (spawn count and the frame after) and Q61's
-  fly-in fade too. Confirm: a frame at entry in Full Simulation beside the original's.
 - [ ] **Q631. WASD scroll the camera, the arrow keys' meaning settled first (notes 6 and 11).** From Alexah's play test,
   2026-10-21 (notes 6 and 11). **Alexah (2026-10-21): W, A, S and D all move the camera; the screen shortcuts on A and S
   move to other free keys, said at the site.** Now only W (forward) and D (right) scroll, nothing back or left, a said
@@ -277,6 +270,20 @@ filed the items that cite it.
   deciding turn: happiness under 1, the park shut, or the day exactly nought (Q109; `ride-operation.md`, the leaving
   row). Count the setters-off by cause in both games on that file (their happiness and `mExitLevel` at the turn)
   before building anything. Confirm: the census a minute in both games, and the causes, predicted first.
+- [ ] **Q669. Draw the key puff at park entry (Q630's build).** `IslandPanel.EnterPark` starts effect 98 with the panel as
+  its owner after closing it, so it is never drawn (`lobby.md`, "The key puff at park entry"). Start it with no owner,
+  as the original's, and say at the site why the owner rule (`lobby.md`, "Deliberate departure") does not bite: no window
+  is open from the Enter to the park (`windows: none` at 0.5 s, `q630/run4`), and Escape cancels the flight before a
+  menu can open (a cancel shows the panel again under a puff still alive, as the original's). Confirm: `lib/lobbyentry.py` (`particles screen` reads "owner no window"), a frame at +0.35 s
+  beside `q630/orig-a/film/e-025.png`, the burst's patch brighter than `q630/run4`'s at the same moment.
+- [ ] **Q670. The park-entry flight is twice as quick as the original's. Measure first.** From Q630. Filmed on Lost
+  Kingdom from the same island panel: the original's loading screen comes 7.3 s after the entering click, its turn onto
+  the gate taking about 4 s of it and its fade (Q61) running from +4.3 to +6.8 s (`q630/orig-a/film-3.0-8.5s.png`); ours'
+  comes 3.0 to 3.8 s after Enter, the camera already at the open gate at +2.9 s (`q630/run3`). The decode reckons 3.1 s
+  of flying in (`lobby.md`, "The derived vtable"), and state 1's turn "within half a step". Read the original's camera
+  (`+0x14`, `+0x18`, `+0x20` of the island camera) a frame at a time over a flight, and its frame rate, before changing
+  anything: a per-pass rate under the 30 fps cap would make the flight's length the frame rate's. Confirm: the same film
+  in both games, the three phases' times predicted first.
 - [ ] **Q598. Every clip's scale track posed.** From Q597. The scale track (`0x80|0x100`; FileFormats `models.md`,
   "Scale") is in 644 tracks of 192 clips, 128 of them in 54 Lost Kingdom clips of 19 wads (`lib/scalescan.py`):
   the shops `fries`, `steak`, `cost_shp`, the rides `lookout`, `monkey`, `porkpie`, `tourride`, `tvsim`, `volcano`,
@@ -2133,6 +2140,8 @@ filed the items that cite it.
   island panel. The gate half landed with Q41: the flight plays M1 as the homing ends and M2 on a cancel
   (`docs/exe/lobby.md`, "Escape cancels the fly-in"), so do not re-pace it. Confirm: screenshot burst from the
   click to the loading screen.
+  - **Note (Q630):** measured on Lost Kingdom, `windows` answers none 0.5 s after Enter, and no frame of the flight
+    shows a front-end control (`q630/run4`): check whether anything of the front end still shows before building.
 
 - [ ] **Q295. An object window's preview starts from the angle the last one left.** From Q291. The first angle is
   `fmod( [0x007afd50], 6.2831855 )` (`0x00468e2f`; `park-engine.md`, the object window's preview): the record is
