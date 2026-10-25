@@ -233,6 +233,13 @@ filed the items that cite it.
   click on the map with one kept hands its `+0x18` to `FUN_00486920` after the close (`0x005f1de8`; with none, a word
   `+0x20064` and the table at `0x007cfb90`, `0x005f1df5`). Not read: what the list holds and what `FUN_00486920` does.
   Counted `MAP_HOVER`. Wants Q664's list. Decode, then build. Confirm: a hover and a click in both games.
+  - **Amended (Q624's review, run 9):** the hover's 5 is SCREEN pixels: at `0x005f198e`..`0x005f1a1b` the pointer is
+    taken as (x * W / 2048, (0x600 - y) * H / 1536), y from the bottom, and `0x005f4180` writes each record's `+0xc`/`+0x10`
+    as the cell centre * 480 / cells * zoom + W / 2, so the reach varies with the zoom in picture terms. What the hover
+    shows: `0x005f1bab`..`0x005f1cfc` builds the text of control `0x991` (through `0x0065d55a`/`0x0065d7d0`, its vtable
+    `+0x24`): the thing's name (`0x00506860`) for kinds 4 to 8, row `0x1c8` or `0x1c9` (`0x006acd60`) for kind 1, or the
+    `0x007cfb90` table's entry (`0x004e2780`) for the word `+0x20064` under the pointer. The click's hand-off is counted
+    `MAP_CLICK_HANDOFF` (`ParkMapScreen.CentreAndClose`) beside `MAP_HOVER`.
 - [ ] **Q666. The map's advisor line 0x130.** From Q624. The map's opener posts the advisor's line `0x130`
   (`FUN_00486b00`, `0x005f100d`) and its close withdraws it (`FUN_00486b40`); here the map posts nothing (counted `MAP_ADVISOR_LINE`). Read the row
   and its response, build it as the buy screen's own line is, and confirm what he says in both games, the same park.
@@ -284,6 +291,21 @@ filed the items that cite it.
   original's wants a breakpoint on `0x0051bfc0` for `0x65` with the queue tool armed), `rj_laypath_2` matched once a click
   in ours' mix, and in the original's capture, which is on its own scale (its gains for it were about 0.04, `q632/orig`'s
   `b-match.txt`, `c-match.txt`): compare the match's score and its presence between the games, not the gain.
+- [ ] **Q690. Keypad 5 and Home reset the park camera, as the original's.** From the Q631 review (run 9). Camera-table
+  rows 19 and 24 (`lib/bindtables.py`: actions `0x14` key `0x0065`, `0x18` key `0x2400`) run `0x0042a500`, which sets bit
+  `0x100` of `[0x00790aac]`; the update answers at `0x0042b518`: zoom `[0x007909ec]` = 110.0, asked rotation
+  `[0x00790a38]` = 0.0, the point `[0x007908f0]`/`[0x007908f4]`/`[0x007908f8]` = 475.0/0.0/175.0 (`0x006fdd40`..
+  `0x006fdd50`), then the bit and gui_CameraFlags' follow bit `0x1000` cleared. Ours counts a press `CAMERA_HOME_RESET`
+  (`ParkOrbitCameraMode.Update`, `ResetInput`) and does nothing else. Build it: zoom 110, yaw 0, point (475, 175),
+  `Scroll` noughted, a locator's follow let go; no modifier, behind the same gate as the other camera keys. Confirm in
+  both games: the original under Proton with `campoi.py` (Home and keypad 5, from a panned, zoomed and turned camera;
+  keypad 5 hangs on Q720's question, which Q625's keypad pans suggest is answered), ours by the log and a photograph;
+  then retire the count. `park-engine.md`, "The point of interest's edge".
+- [ ] **Q692. Do the game menu and the options screen switch the camera table off?** From the Q631 review (run 9),
+  decode. `WindowStack.CameraTableOff` holds the camera keys off under a message box and the Save and Load screens only,
+  whose openers call `FUN_00486b70` (`0x0047efa0`, `0x0049f406`). The game menu (`0x0048c830`) and the options screen
+  (`0x004a3a30`) also pause but are not among the `0x0040cfa0` callers read. Read their handlers, measure one key held
+  behind the menu in the original, then widen `CameraTableOff` or say why not.
 - [ ] **Q598. Every clip's scale track posed.** From Q597. The scale track (`0x80|0x100`; FileFormats `models.md`,
   "Scale") is in 644 tracks of 192 clips, 128 of them in 54 Lost Kingdom clips of 19 wads (`lib/scalescan.py`):
   the shops `fries`, `steak`, `cost_shp`, the rides `lookout`, `monkey`, `porkpie`, `tourride`, `tvsim`, `volcano`,
@@ -2225,6 +2247,12 @@ The decode session writes the finding to `docs/exe/` and stops. The build is the
     crosshair to choose where; the camcorder strafes and feels like a fast arcade game with a lazy camera. The crosshair
     is this item's own text (cursor 0x13, QUEUE:1923-1926), the speed is the "chosen 40, the original's 21.8"
     (QUEUE:1927-1930), strafing is Q17 (QUEUE:1832). Note 34 (the camera after leaving) is split into Q626.
+  - **Q691 (filed here, from the Q626 review, run 9): the wheel in the original's first person.** The viewfinder layer
+    passes every message to `FUN_0042a760` (`0x00488b6a`); the wheel (message `0x1000d`, byte table `0x0042a978` entry
+    11 -> 4 -> `0x0042a91d`) adds -10 or +10 to the zoom `0x007909ec` with no flag test, so it changes the walk's speed
+    (`sqrt( zoom ) x 0.02`, `0x0042bc2a`) and the zoom the orbit comes back at (clamped 70..130, `0x0042c621`). Read from
+    the listing only. Ours (`ParkCamcorderCameraMode.Update`) reads no wheel there and counts nothing. Measure it first
+    (`campoi.py` polling the zoom and the walk's speed), then build it or count it `FIRST_PERSON_WHEEL`; confirm both games.
 - [ ] **Q27. Pushing the mouse at the screen edge does not scroll.** The "push scroll" option exists and
   is read by nothing. `ParkOrbitCameraMode.Update` scrolls from keys only. Decode the camera
   binding table at `0x00748158` (`park-engine.md`, "The park camera"), then build. **Note (Q631):** the push feeds the
