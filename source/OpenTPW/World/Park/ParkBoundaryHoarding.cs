@@ -5,7 +5,10 @@ namespace OpenTPW;
 /// <summary>
 /// The wall between the park and the land not yet bought: one model for each anchor of the boundary's hoarding track
 /// (track type 25), made again from the park file's model records as the original's loader makes every model
-/// (<c>FUN_004647a0</c>; <c>docs/exe/park.md</c>, "The boundary hoarding's piece").
+/// (<c>FUN_004647a0</c>; <c>docs/exe/park.md</c>, "The boundary hoarding's piece"). The original then clears each
+/// anchor's saved handle and re-claims its piece by matching item, cell and angle (<c>FUN_0053b1a0</c> through
+/// <c>FUN_00522f20</c> and <c>FUN_00463ab0</c>); this draws every record of items 17300 on without that claim, which no
+/// park file to hand tells apart (every anchor has its record and no such record lacks an anchor).
 ///
 /// <para>
 /// A piece's record carries its item, 17300 plus its row of the hoarding table (<c>FUN_00522e40</c>, <c>0x00522ea0</c>), the
@@ -91,7 +94,8 @@ public sealed class ParkBoundaryHoarding : Entity
 
 	/// <summary>
 	/// The pieces a park file's model records make, in the file's order: each record of an item from 17300 on, by its row's
-	/// model, its cell and its angle. None where the park has no file or its model module does not read.
+	/// model, its cell and its angle, whether or not an anchor names it (the original's claim is not made, see the class).
+	/// None where the park has no file or its model module does not read.
 	/// </summary>
 	public static List<Piece> Read( IParkInitialState? park, ParkItemCatalogue? catalogue )
 	{

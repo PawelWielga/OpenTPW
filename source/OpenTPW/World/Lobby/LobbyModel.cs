@@ -870,8 +870,10 @@ public sealed class LobbyModel : IChannelPosed
 	/// </param>
 	/// <remarks>
 	/// Not the original's in one way: the engine skips the restore where the start passed <c>0x4</c> or <c>0x8</c>, and
-	/// the hide list where it passed <c>0x8</c> (<c>FUN_00472f60</c>; a queued clip's promotion), and the caller here,
-	/// <see cref="RideAnimations.PoseChannel"/>, rests at every change of clip, as it already does the places.
+	/// the hide list where it passed <c>0x8</c> (<c>FUN_00472f60</c>; a queued clip's promotion passes it off-screen only,
+	/// <c>0x00473874</c>), and the caller here, <see cref="RideAnimations.PoseChannel"/>, rests at every change of clip, as
+	/// it already does the places, and at no other: the engine also restores at a loop's restart in view
+	/// (<c>0x00473848</c>), where this shows and hides nothing.
 	/// </remarks>
 	public void Rest( AnimationFile outgoing, AnimationFile? incoming = null )
 	{
@@ -892,7 +894,7 @@ public sealed class LobbyModel : IChannelPosed
 	/// <summary>
 	/// What a change of clip does to which nodes are hidden, in the order the engine does it (<c>FUN_00472f60</c>): the
 	/// restore shows again every node <paramref name="outgoing"/> has a track of any kind for and every node of its hide
-	/// list (<c>Anim_RestoreOutgoing</c>, <c>0x00472486</c>), then the bind hides every node of
+	/// list (<c>Anim_RestoreOutgoing</c>: the tracks' clear at <c>0x00472486</c>, the list's at <c>0x00472401</c>), then the bind hides every node of
 	/// <paramref name="incoming"/>'s hide list (<c>FUN_00472d70</c>, <c>0x00473117</c>); a transform-only node is
 	/// spared both (<c>docs/exe/park.md</c>, "The per-clip hide list"). Each node with whether it is left shown.
 	/// </summary>

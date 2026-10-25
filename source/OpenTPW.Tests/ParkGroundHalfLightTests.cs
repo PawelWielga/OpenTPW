@@ -6,7 +6,7 @@ using System.Linq;
 namespace OpenTPW.Tests;
 
 /// <summary>
-/// Land outside the park is drawn at half light: <c>FUN_00450d10</c> marks each ground cell whose map cell, held to
+/// Land outside the park is drawn at half light: <c>Terrain_MarkLandOutsidePark</c> (<c>0x00450d10</c>) marks each ground cell whose map cell, held to
 /// <c>MapInfo</c>'s limits, carries <c>mFlags</c> <c>0x40</c> and not <c>0x80</c> (docs/exe/park-engine.md, "The park
 /// view's colours").
 /// </summary>

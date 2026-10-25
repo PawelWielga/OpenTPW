@@ -152,9 +152,11 @@ public static class ParkBuilding
 
 		if ( objects?.PlaceNow( placed, catalogue ) != true )
 		{
-			// Dead by CONTENT (Q615): all 61 items a buy list shows load in the running game, so this return is met by none and
-			// the id taken above is not given back. A shipped item that did not load would strand it (and its _madeAt stamp)
-			// until the park is reloaded; the fix then is state.DeleteThing( thingId ) here.
+			// Dead by CONTENT (Q615): Lost Kingdom's 61 items in a Full Simulation buy list all load in the running game
+			// (Instant Action shows 41; no other theme was run), so this return is met by none and the id taken above is
+			// not given back. A shipped item that did not load would strand it (and its _madeAt stamp) until the park is
+			// reloaded; the fix then is state.DeleteThing( thingId ) here. What the original does at this failure
+			// (FUN_004db090) was not read.
 			if ( trackRide != 0 )
 				state.TrackRides.Free( trackRide );
 

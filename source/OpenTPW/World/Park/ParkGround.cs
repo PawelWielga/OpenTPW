@@ -529,7 +529,7 @@ public sealed class ParkGround : ModelEntity
 	public const ushort KeptLit = 0x80;
 
 	/// <summary>
-	/// Which ground cells are drawn at half light: <c>FUN_00450d10</c>, run as a park loads (<c>FUN_005323f0</c>,
+	/// Which ground cells are drawn at half light: <c>Terrain_MarkLandOutsidePark</c> (<c>0x00450d10</c>), run as a park loads (<c>FUN_005323f0</c>,
 	/// <c>FUN_00415140</c>) and after Buy Land (<c>FUN_005327e0</c>). Each of the field's cells asks its map cell, held
 	/// to 0 to <paramref name="mapWidth"/> - 1 and 0 to <paramref name="mapHeight"/> - 1 (<c>0x00450d3d</c> to
 	/// <c>0x00450d64</c>), so the field's last column and row ask the map's last; the cell is half lit where that one's

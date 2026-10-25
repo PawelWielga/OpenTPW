@@ -733,7 +733,7 @@ internal sealed class ParkAdvisorMessages
 		internal int WalkAwayShare => unchecked((int)((uint)(WalkAways * 100) / (uint)Customers));
 	}
 
-	/// <summary>The outlets of a park's facts, in the world's thing order, compared by their figures as the other facts are.</summary>
+	/// <summary>The outlets of a park's facts, in the object chain's order (the original walks its used-thing list; only a tie's thing could differ, and nothing reads it), compared by their figures as the other facts are.</summary>
 	internal sealed record OutletList( IReadOnlyList<OutletFigures> All )
 	{
 		public bool Equals( OutletList? other ) => other is not null && All.SequenceEqual( other.All );
@@ -742,7 +742,7 @@ internal sealed class ParkAdvisorMessages
 	}
 
 	/// <summary>
-	/// The outlet <paramref name="judged"/> picks of <paramref name="outlets"/>, in the world's thing order, and its
+	/// The outlet <paramref name="judged"/> picks of <paramref name="outlets"/>, in the object chain's order (see <see cref="OutletList"/>), and its
 	/// figure; null where none qualifies. One qualifies more than thirty days old (0x1e), and, by the walk-away share,
 	/// with customers in its last thirty days (0x004cac23); a sideshow judged by satisfaction too (0x004cbec0, the one
 	/// satisfaction helper that asks). The best or worst is kept strictly, so the first of equals wins.

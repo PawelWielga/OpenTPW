@@ -652,7 +652,7 @@ public static class DebugConsole
 				break;
 
 			case "outlets":
-				// The shops and sideshows as the advisor's rows 238 to 257 judge them, in the world's thing order.
+				// The shops and sideshows as the advisor's rows 238 to 257 judge them, in the object chain's order.
 				if ( ParkPeople.Current?.AdvisorFacts().Outlets?.All is not { } judged )
 				{
 					Reply( "outlets: a park has to be loaded" );

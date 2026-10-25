@@ -9827,7 +9827,7 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   `0x0400` cell and 1.0 elsewhere, and `RenderFlags_ForceRelight` relights them; a level face reads 0.517 (blue 0.563).
   The water's materials (word `+0x0C` bit `0x1`, `DrawList_AddMaterialFaces` `0x00580530`) are drawn unlit, white.
   Measured: the cliff path 0.48 of ours, the grass strips 0.53, plain rock 0.51/0.51/0.55, the water 0.90; every river,
-  cliff, volcano and water normal 0.225 long (`park-engine.md`, "The terrain model's meshes on that land are half lit
+  cliff and water normal 0.225 long, the volcano's 1,659 of 1,672 (13 are length 0, NaN after the walk) (`park-engine.md`, "The terrain model's meshes on that land are half lit
   too"; `q619/side-by-side.png`, `q619/PREDICTION.txt`). The build is Q652.
 - [x] **Q713. The advisor's shop and sideshow value and satisfaction rows, 238 to 257.** From the fork watch, 2026-10-19
   (`verify-advisor-ui.md` L1; `advisor-park.md`, "Shop and sideshow value and satisfaction, rows 238 to 257"). Twenty
@@ -9848,7 +9848,7 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   - **Done (Q713, lane B, off-screen):** rows 239 to 241 read (shops, restaurants, drinks by the lowest walk-away share)
     and all forty keys matched (`FoodPoorValue.ValueWorseThan` .. `SideshowsGreatSatisfaction.ScorePerPoint`); twenty
     topics built, `ShopType` read. On that load rows 238 to 256 polled on 19021 to 19039, each score predicted; row 257
-    scored 24 on 19040 (sideshow 50 at 76, one short of the original's). Made files: row 248 `score=100 ... tick=19031
+    scored 24 on 19040 (sideshow 50 at 76, where the original said it). Made files: row 248 `score=100 ... tick=19031
     result=post` and said (sample 516); row 257 `score=68 ... tick=19040` and said, sample 525, props (8, 0)
     (`q713/PREDICTION.txt`). `PARK_ADVISOR_POLLED_ROW_NOT_BUILT` 20 fewer a round. The original on the made file: Q743.
 - [x] **Q620. The boundary wall between the park and the unbought land is not drawn.** From Alexah's play test,
@@ -9864,7 +9864,7 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   **Done (2026-10-24):** a loaded park's pieces are made again from its model records (items 17300 plus the hoarding
   table's row, the record's cell and angle, the middle of the ground under the two cells square), as the original's
   loader makes them; table `0x00762ff0` and the rest of `Track_PieceForCell` are read (`park.md`, "The boundary
-  hoarding's piece"; FileFormats `saves.md`, "A boundary piece's record", 563 anchors of seven files agree). Built:
+  hoarding's piece"; FileFormats `saves.md`, "A boundary piece's record", 933 anchors in seven files, 520 in four parks, agree). Built:
   `ParkBoundaryHoarding`, `SavedThing`'s cell and angle, the console's `boundary [X Y]`, `BOUNDARY_HOARDING_UNMADE` and
   `_ROW`. Measured: 143 pieces on 143 anchors in the stock park (90 `ho_fos1`, 19 `ho_fos2`, 13 `ho_fos3`, 12 `ho_fob1`,
   8 `ho_fob2`, 1 `ho_fos4`), the wall beside the gate and along row 13 lying on the original's at the same cameras
@@ -9886,9 +9886,9 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   `AdvisorModel`'s 1.4 ambient and 0.3 light, unclamped (`ui.md`, "How he is lit"; `q621/PREDICTION.txt`,
   `q621/orig/r1-four.png`, `q621/ours-four.png`). The build is Q657.
 - [x] **Q615. A make that fails after it took its id gives the id back.** Settled as dead by CONTENT, 2026-10-24: every one of Lost Kingdom's
-  61 buyable items (UI type 0 to 3) builds in a Full Simulation park (`q615/run6`, 61 of 61 "built as thing", no "would not load" line; the
-  stock Instant Action park reaches 41, `run5`, the other 20 being left out of its catalogue), each script reads
-  (`ParkMakeFailureReachTests`, which fails with the script path put wrong), and the End, the one item `BindFixed` is asked for, is
+  61 buyable items (UI type 0 to 3) builds in a Full Simulation park (`q615/run8`, 61 of 61 "built as thing", no "would not load" line; the
+  stock Instant Action park reaches 41, `run5`, the other 20 being left out of its catalogue), each script loads
+  (`ParkMakeFailureReachTests`, which fails with the script path put wrong; it covers the End's return only: `Build`'s is `PlaceNow`'s answer, pinned by no test, and rests on run8's census), and the End, the one item `BindFixed` is asked for, is
   made and ended (`q615/run7`). So `ParkBuilding.Build`'s "would not load" return and `ParkEndFeature.Make`'s "script would not run"
   return are met by no shipped content, and both comments at the sites now say so and name the fix (`DeleteThing`) for the day one is.
   Nothing changed in what runs; the original was not run (lane B), and nothing the original does at that failure was needed.
@@ -9916,7 +9916,7 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   **Done (2026-10-24):** the first visit was drawn; every later one was not. The take-off (`seaplanem3`) hides its five
   meshes by visibility keys from frame 396 of 400 and the landing (`seaplanem1`) carries none, so only the original's
   clip change shows it again: `Anim_RestoreOutgoing` clears the hidden bit on every node the outgoing clip tracks or
-  lists (`0x00472486`), then the incoming hide list is hidden (`0x00473117`; `park.md`, "The per-clip hide list").
+  lists (`0x00472486` for the tracks, `0x00472401` for the list), then the incoming hide list is hidden (`0x00473117`; `park.md`, "The per-clip hide list").
   Built: `LobbyModel.ShownAtChange`, applied in `LobbyModel.Rest`; a start on an idle channel counted (Q658).
   Confirmed on the final binary (`q622/PREDICTION.txt`, run-F3): the second visit landing and at its stop beside main's
   empty harbour (`q622/control-vs-fix.png`), and the original's seaplane drawn on its second and third visits

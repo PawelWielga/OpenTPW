@@ -139,8 +139,9 @@ internal sealed class ParkEndFeature
 
 		if ( rides.BindFixed( thingId, item ) is not { } script )
 		{
-			// Dead by CONTENT (Q615): End.RSE reads, and the id is fresh, so BindFixed answers a script. Were it met, the id
+			// Dead by CONTENT (Q615): End.RSE loads, and the id is fresh, so BindFixed answers a script. Were it met, the id
 			// taken above would stay stranded until the park is reloaded; the fix then is _state.DeleteThing( thingId ).
+			// What the original does at this failure was not read.
 			Log.Warning( $"End feature: thing {thingId}'s script would not run, so no End is made" );
 			objects.Remove( thingId );
 			return null;

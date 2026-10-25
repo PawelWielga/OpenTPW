@@ -428,7 +428,7 @@ In the node walks (the picker's `PickMarch_MeetModel`, `FUN_0045d090`, and three
 The list lives at clip block `+0x1a` (count) / `+0x38` (pointer). **854 of 1,166 clips carry one, 12,872 entries in total** (859 of the 1,237 clips under `levels/` that carry a block, counted without the track-table check).
 
 - **`FUN_00472d70` HIDES the incoming clip's list at clip start.** Each entry resolves by the same `idx < meshCount ? meshTable + idx*0xa0 : nodeTable + (idx-meshCount)*0x58` rule `ModelFile` uses, then sets flag `0x10` unless the node carries `0x80000000`. **Entries are NODE INDICES.**
-- **`FUN_00472310` (`Anim_RestoreOutgoing`) CLEARS `0x10` over the outgoing clip's list**, then restores `0x289` nodes from the master by copying matrix rows `+0x10/+0x20/+0x30/+0x40` (a node's mask is the outgoing clip's channels on it less the incoming clip's, so a node both move on the same channel stays as the outgoing left it; `NodePoser.Rest`, Q554), with arms for `0x1000` and `0x10000` and no `0x20000` arm: it copies no visibility keys. **Before that, its loop over the outgoing clip's tracks clears `0x10` on every node one of them targets, whatever the track is (`0x00472486`, a `0x80000000` node apart)**, so what a clip's visibility keys hid is shown again at the next clip on the channel, and the incoming hide list is then hidden (`FUN_00472d70`, `0x00473117`). The whole restore is skipped where the start passed `0x4` or `0x8`, the hide list where it passed `0x8` (`FUN_00472f60`). The seaplane depends on it: `seaplanem3` (the take-off) hides its five meshes from frame 396 of 400 and `seaplanem1` (the landing) has no visibility track, so the original draws it on every later visit (Q622, `q622/orig/d-six.png`). OpenTPW: `LobbyModel.ShownAtChange`, applied in `LobbyModel.Rest`; a start on an idle channel, which no rest follows, counts `CLIP_HIDE_LIST_ON_IDLE_CHANNEL`.
+- **`FUN_00472310` (`Anim_RestoreOutgoing`) CLEARS `0x10` over the outgoing clip's list**, then restores `0x289` nodes from the master by copying matrix rows `+0x10/+0x20/+0x30/+0x40` (a node's mask is the outgoing clip's channels on it less the incoming clip's, so a node both move on the same channel stays as the outgoing left it; `NodePoser.Rest`, Q554), with arms for `0x1000` and `0x10000` and no `0x20000` arm: it copies no visibility keys. **Before that, its loop over the outgoing clip's tracks clears `0x10` on every node one of them targets, whatever the track is (`0x00472486`, a `0x80000000` node apart; the hide list's own clear is `0x00472401`)**, so what a clip's visibility keys hid is shown again at the next clip on the channel, and the incoming hide list is then hidden (`FUN_00472d70`, `0x00473117`). The whole restore is skipped where the start passed `0x4` or `0x8`, the hide list where it passed `0x8` (`FUN_00472f60`). The seaplane depends on it: `seaplanem3` (the take-off) hides its five meshes from frame 396 of 400 and `seaplanem1` (the landing) has no visibility track, so the original draws it on every later visit (Q622, `q622/orig/d-six.png`). OpenTPW: `LobbyModel.ShownAtChange`, applied in `LobbyModel.Rest`; a first start on a channel, which no rest follows (a channel parked at a role the model lacks keeps its last clip, so a start after that does rest), counts `CLIP_HIDE_LIST_ON_IDLE_CHANNEL`. The engine also restores at a loop's restart in view (`0x00473840`..`0x00473848` call `FUN_00472f60` with the same role and entry and flags `1`, `| 8` only off-screen), which reaches `FUN_00472310` with the outgoing clip the incoming one; OpenTPW rests only when the clip reference changes, so a loop's restart shows and hides nothing (no Lost Kingdom thing loops a clip whose visibility track starts after frame 0).
 - The `& 4` id-search arm is a flag on the **MODEL record**, not on the clip. The default path is index-addressed and is all shipped data needs (**only 4 entries in the whole game fall past their model's nodeCount**).
 - **`FUN_004726d0` recomposes hide state across every channel** (array at `+0x10`, count at `+0xe`, stride 0x38), clearing then re-applying per channel.
 
@@ -1683,15 +1683,17 @@ track record's byte `+0xc`, `FUN_00522770`) in table `0x00762ff0` (`BoundaryPiec
 
 On the gate's two ends (`[0x007639f0]`..`[0x007639fc]`) the mask first takes `FUN_004d8c00`'s bits. A straight (two
 neighbours by `FUN_00522810`, opposite: `0x01` and `0x10`, or `0x04` and `0x40`) whose byte from `FUN_00522850` is `0x40` or
-`0x10` turns 180 more. Where the mask is no straight and `FUN_00522810` answers under three, the track record's flag word
-`+0xe` adds 9, 12 or 15 (bits 1, 2, 8) or makes the row 0x12 (bit 4). A corner (two neighbours at right angles) adds 0x10
+`0x10` turns 180 more. The track record's flag word `+0xe` is skipped for a corner (two neighbours at right angles; `0x0053a710`) and
+for a cell of more than two neighbours whose mask is not nought (`0x0053a721`..`0x0053a735`), so ends, straights and an
+isolated anchor take it: bits 1, 2 and 8 each add 9, 12 and 15 to the row (cumulatively, three separate tests,
+`0x0053a73f`..`0x0053a75e`), and bit 4 then makes the row 0x12 (`and ebp,0xffff0000; add ebp,0x12`). A corner (two neighbours at right angles) adds 0x10
 where `FUN_00522850`'s byte and the mask are one of eight pairs (`0x01`/`0x41`, `0x10`/`0x14`, `0x04`/`0x05`, `0x40`/`0x50`,
 `0x40`/`0x14`, `0x01`/`0x50`, `0x04`/`0x41`, `0x10`/`0x05`) and then takes 0x1b where the flags' low four bits are set; any
 other corner with them set takes 0x1a. A straight whose low four flag bits are clear adds a variant, 0 (`[0x00820aec]` under
 18), 20 (18 to 23) or 23 (24 to 29), only when it differs from the last piece's (`[0x00820af0]`), and rolls the next from
 the park's generator (`FUN_00516330() % 30`). The answer is `row | 0x50000`. `FUN_00522810` and `FUN_00522850` are not read.
-**The model:** `FUN_00522f20` (`Hoarding_MakePieceModel`)`( x, y, family, row, rotation, restoring )` turns the piece by 360 less the rotation and moves
-the cell one on for 90 (y), 180 (x and y) and 270 (x), then makes the model with `FUN_00463060( table[row].model, 0x33a,
+**The model:** `FUN_00522f20` (`Hoarding_MakePieceModel`)`( x, y, family, row, rotation, restoring )` turns the piece by the angle 360 less the rotation (360 folded to 0) and moves
+the cell one on by that angle: 90 moves y, 180 x and y, 270 x (so a rotation of 90 moves x and one of 270 moves y), then makes the model with `FUN_00463060( table[row].model, 0x33a,
 { x, y, angle, 0x008179f8 }, table[row].mask, ..., -1, 0 )`: flags `0x33a` with a footprint, so the height is the middle of
 the lowest and highest ground under it ("Where a placed object's model stands"), and the footprint at `0x008179f8` is
 2 by 2 (`FUN_00522e40` writes both). The table `0x00763608` (`HoardingPieceTable`) is 28 rows of `{ model, name, mask }` that `FUN_00522e40` (`Hoarding_LoadPieceModels`)
@@ -1704,13 +1706,22 @@ row before's model (`0x00522ed2`):
 So a straight's variants 22 and 25 draw `ho_fos2` and `ho_fos3`, a model of items 17320 and 17323. The row's mask byte goes
 to `FUN_00454a10`, whose `FUN_0044b140` hides (`0x80000010`) each node whose lookup record's `+8` word shares a bit with it;
 none of the 36 hoarding models of the four themes has a lookup record, so it hides nothing.
-**A loaded park makes none of this again**: its model records are made as they were saved (`FUN_004647a0`), and the
-anchor's track record names its piece's handle (FileFormats `saves.md`, "A boundary piece's record"; the mask `+0xc` is the
-file's `mHoardingNeighbours`, the row and rotation its `mTileData`): in the seven park files to hand, 563 anchors of five
-parks and three themes, every anchor names a record of its row's model, on its cell moved by its turn, at 360 less the turn.
+**A loaded park makes no model of this again, but the loader claims each piece through its anchor.** Its model records
+are made as they were saved (`FUN_004647a0`), and the anchor's track record names its piece's handle (FileFormats
+`saves.md`, "A boundary piece's record"; the mask `+0xc` is the file's `mHoardingNeighbours`, the row and rotation its
+`mTileData`). The post-load rebuild (`FUN_00415140`, `0x00415169`) calls `FUN_004d83a0`, which walks all 128 x 128 cells
+(`0x004d83e3`..`0x004d83fa`) and calls `FUN_0053b1a0` for each: that clears the saved handle (`0x0053b1d2`, where the
+cell's type is not 0x15) and, for family 5, calls `FUN_00522f20( x, y, {set, row, angle}, 1 )` (`0x0053b269`) and stores its
+answer back. With the sixth argument non-zero `FUN_00522f20` calls `FUN_00463ab0` with no handle (`0x00522f66`,
+`0x00522fa8`) instead of `FUN_00463060`: that walks the slots, skips any with `+4 & 0x10000`, and matches the item type,
+flags `+0xe4` (`0x33a`), cell `+0xe8`/`+0xec`, angle and footprint; a match is marked `0x10000` and answered
+(`0x00463c59`..`0x00463c6f`), else it answers 0 (`0x00463c70`). No model is made on either branch. Whether the original
+then frees or hides a 173xx record no anchor claimed (a slot lacking `0x10000`) was not read. In the park files to hand
+(933 anchors in seven files, 520 in the four distinct parks, across three themes) every anchor names a record of its row's
+model, on its cell moved by its angle, at the record's angle (360 less the turn), and no 173xx record lacks an anchor.
 **OpenTPW builds it** from the records (`ParkBoundaryHoarding`); a park made fresh writes its anchors with no record or
 mask (`FreshParkBoundary`), so its pieces are counted, `BOUNDARY_HOARDING_UNMADE` (Q656). Measured: the stock park's
-wall right of the gate and along row 13 in both games at the same cameras (Q620, `q620/overlay-gate.png`).
+wall right of the gate and along row 13 in both games at the same cameras (Q620, `q620/overlay-gate-final.png`).
 
 ### The ride object
 
@@ -2621,7 +2632,7 @@ What the binary invalidates:
 
 **Bare-only-M models outside `levels/`: zero**, so the bare-file probe cannot touch the lobby. But **91 models ship more than one numbered M clip**, and **8 of them are lobby models** — `*_gate` with 3 and `*_isle` with 2, in all four themes — plus the advisor with 15. `MeshAnimator` cycles every clip in turn and `MeshRotator` the first two (`ClipsUsed = 2`), but neither loops a gate: `LobbyGate` poses M1 once as the park-entry flight swings onto it and M2 when Escape cancels the flight, each over the span it declares (`lobby.md`, "Escape cancels the fly-in, and the gate is the flight's"). **So a channel must be something a park model opts into, leaving lobby playback exactly as it is.**
 
-Known divergences still open, both in lobby playback, which a park thing does not use: `MeshAnimator` and `MeshRotator` keep private clocks, and play `FirstFrame..LastFrame` (`MeshRotator` only as far as `MotionEnd`) where the engine plays **0 -> declared span** (164 clips disagree). For a park thing the per-clip hide list is still unread, and `PoseAsBuilt` hand-rolls its effect after the build.
+Known divergences still open, both in lobby playback, which a park thing does not use: `MeshAnimator` and `MeshRotator` keep private clocks, and play `FirstFrame..LastFrame` (`MeshRotator` only as far as `MotionEnd`) where the engine plays **0 -> declared span** (164 clips disagree). For a park thing the per-clip hide list is applied only at a change of clip (Q622), not at a start on an idle channel (Q658), and `PoseAsBuilt` hand-rolls the build's end.
 
 `AnimationFile.VisibilityTrack` already matches the engine's visibility rule exactly. `AnimationFile.RotationTrack.Ease` obeys the easing table. The per-clip hide list is applied to the drawn model at a change of clip (`LobbyModel.ShownAtChange`, Q622), not yet at a start on an idle channel (counted).
 

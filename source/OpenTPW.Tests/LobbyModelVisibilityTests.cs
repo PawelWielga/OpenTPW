@@ -2,6 +2,8 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
+using System.Runtime.CompilerServices;
 
 namespace OpenTPW.Tests;
 
@@ -139,5 +141,69 @@ public class LobbyModelVisibilityTests
 		var touched = LobbyModel.ShownAtChange( build, loop, transformOnly ).Select( change => change.Node ).ToArray();
 
 		Assert.IsFalse( touched.Contains( 3 ) || touched.Contains( 4 ), string.Join( " ", touched ) );
+	}
+
+	/// <summary>
+	/// Only what the outgoing clip tracked or listed is shown again, not what the incoming clip tracks: the Jungle
+	/// Spray's first clip keys nodes 10 and 15, its second 11 and 16, and the change shows the first's alone.
+	/// </summary>
+	[TestMethod]
+	public void TheIncomingClipsTrackedNodesAreNotShown()
+	{
+		const string at = "levels/jungle/sideshow/junspray";
+		var first = Clip( $"{at}/junspraym1.md2" );
+		var second = Clip( $"{at}/junspraym2.md2" );
+
+		CollectionAssert.AreEqual( new[] { 11, 16 }, second.Tracks.Select( track => track.Node ).ToArray(), "the incoming clip keys other nodes" );
+		CollectionAssert.AreEqual( new[] { (10, true), (15, true) },
+			LobbyModel.ShownAtChange( first, second, TransformOnly( $"{at}/junspray.md2" ) ).ToArray() );
+	}
+
+	/// <summary>
+	/// <see cref="LobbyModel.Rest"/> itself puts the change's showing and hiding on the drawn meshes: the seaplane's
+	/// meshes, put away by its take-off, are drawn again by the landing that follows. The model is built without its
+	/// graphics (<see cref="RuntimeHelpers.GetUninitializedObject"/>), with only the fields <c>Rest</c> reads.
+	/// </summary>
+	[TestMethod]
+	public void RestShowsTheMeshesTheTakeOffPutAway()
+	{
+		const string at = "levels/jungle/features/seaplane";
+		var takeOff = Clip( $"{at}/seaplanem3.md2" );
+		var landing = Clip( $"{at}/seaplanem1.md2" );
+
+		using var stream = new MemoryStream( data.ReadAllBytes( $"{at}/seaplane.md2" ) );
+		var file = new ModelFile( stream );
+		var meshes = file.Meshes.Count;
+		var entities = Enumerable.Range( 0, meshes ).Select( _ => new ModelEntity() ).ToArray();
+
+		try
+		{
+			var model = (LobbyModel)RuntimeHelpers.GetUninitializedObject( typeof( LobbyModel ) );
+			const BindingFlags any = BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public;
+
+			void Set( string field, object value ) => typeof( LobbyModel ).GetField( field, any )!.SetValue( model, value );
+
+			Set( "_file", file );
+			Set( "<Entities>k__BackingField", entities );
+			Set( "<Offsets>k__BackingField", new OpenTPW.Vector3[meshes] );
+			Set( "<Animators>k__BackingField", new MeshAnimator[0] );
+			Set( "_nodeParents", file.Nodes.Select( node => node.ParentIndex ).ToArray() );
+			Set( "_placedRotation", System.Numerics.Quaternion.Identity );
+
+			foreach ( var track in takeOff.VisibilityTracks )
+				model.SetMeshVisible( track.TargetIndex, track.VisibleAt( takeOff.LastFrame ) != false );
+
+			Assert.IsTrue( Enumerable.Range( 0, 5 ).All( mesh => entities[mesh].Opacity == 0f ), "the take-off leaves its five meshes put away" );
+
+			model.Rest( takeOff, landing );
+
+			Assert.IsTrue( Enumerable.Range( 0, 5 ).All( mesh => entities[mesh].Opacity == 1f ),
+				string.Join( " ", entities.Select( entity => entity.Opacity ) ) );
+		}
+		finally
+		{
+			foreach ( var entity in entities )
+				entity.Delete();
+		}
 	}
 }

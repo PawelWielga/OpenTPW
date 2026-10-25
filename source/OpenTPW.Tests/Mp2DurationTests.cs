@@ -18,7 +18,10 @@ public class Mp2DurationTests
 	{
 		GameData.Required();
 
-		return Directory.EnumerateFiles( GameDir.Data, "*.sdt", SearchOption.AllDirectories )
+		// The banks are spelled .sdt and .SDT (the speech banks), so the match ignores case on every platform.
+		var options = new EnumerationOptions { RecurseSubdirectories = true, MatchCasing = MatchCasing.CaseInsensitive };
+
+		return Directory.EnumerateFiles( GameDir.Data, "*.sdt", options )
 			.SelectMany( path =>
 			{
 				using var archive = new SdtArchive( path );
@@ -69,9 +72,10 @@ public class Mp2DurationTests
 		CollectionAssert.AreEqual( new[] { "global/sound/RideHD.sdt:mortar_2.mp2", "global/sound/RideHD.sdt:mortar_3.mp2",
 			"global/sound/RideHD.sdt:tp_riderepaired", "global/sound/RideHD.sdt:tp_sideshowwin_", "global/sound/SfxHD.sdt:keyexplode.mp2" },
 			mpeg1, "the MPEG-1 entries" );
+		Assert.AreEqual( 3739, entries.Count, "every entry of the game's 47 banks" );
 		Assert.AreEqual( entries.Count, checkedCount, "every entry has a duration and a played length" );
 
-		// Measured: the stream is always the longer, by 14.4 to 78.5 ms (an encoder's delay and the padding of its last frame).
+		// Measured: the stream is always the longer, by 14.4 to 82.8 ms over all 3,739 entries (an encoder's delay and the padding of its last frame).
 		Assert.IsTrue( least >= 0 && worst < 90, $"the gaps run {least:F1} to {worst:F1} ms" );
 	}
 }

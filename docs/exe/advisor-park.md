@@ -693,7 +693,7 @@ mechanic's decide posts began `Advisor: sample 202 ... wearing 5,0`, `advisor` r
 | | The original | OpenTPW |
 |---|---|---|
 | The props of a line | put on after every clip's start | put on again at every clip's start (Q595) |
-| The hat's colour | its texel at most, a full yellow (`ui.md`, "How he is lit": the ambient and twice a white light, clamped) | lemon: he is lit past his textures, 1.4 to 1.7 times (Q657) |
+| The hat's colour | its texel at most unless his draws carry state bit `0x10000` (`MODULATE2X`, not settled, Q657), a full yellow (`ui.md`, "How he is lit": the ambient and twice a white light, clamped) | lemon: he is lit past his textures, 1.4 to 1.7 times (Q657) |
 | The theme's costume, prop -1, and the theme's own model | slot 1's 137 rows: in Lost Kingdom the fly in an explorer's hat, no antennae (`q344/orig/a-told.png`) | the same, lit past its textures ("The theme's own advisor and its costume", below) |
 | A clip word's `0x10000` (no prop, the head hidden) and its particles | a gesture row's | the same (Q595): only rows 1 and 13 carry flags |
 
@@ -5208,19 +5208,22 @@ order with its outlet (`OutletOf`: the item's `ShopType`, else a sideshow's `Whi
 B, Alexah's jungle `New Save` loaded on tick 19004 by Q707's F player, as the original's `q707/orig/O2` was). *The file
 as it is* (`run3-fs`): rows 238 to 256 polled on ticks 19021 to 19039, each score and outlet as predicted from the load's
 census (238 -500 on food 257, ... 254 `cooldown` 40 on shop 47, its record said on 11907); row 257 on 19040 scored 24,
-`under-threshold`: sideshow 50's satisfaction stayed 76 through the rings' rolls on 19008 and 19032, where the original's
-reached 77 and said it (a miss, its cause the guests' visits, not the row). *Made files* (`parkfile.ring_set`): with food
+`under-threshold`: sideshow 50's satisfaction stayed 76 through the rings' rolls on 19008 and 19032, where the original said it
+(some sideshow of its at 77 or more; which one, and its figure, were not read). The miss is the guests' timing, not the row:
+guest 467's visit (`Happiness changed by 300 since using object 50`, `run3-fs/run.log:3061`) landed after the 19032 roll,
+and the sideshow reached 86 at 19055. *Made files* (`parkfile.ring_set`): with food
 stall 193 given a day of seven walk-aways to its seven customers and row 248's record made fresh (`run4-made`), `poll
 message=248 ... score=100 ... tick=19031 result=post outlet=Food thing=193 figure=100 line=80` and the line said on that
 tick, response 488, sample 516, in the fast-food hat and the spatula (13, 14); with sideshow 50's thirty satisfaction days
 40 (`run6-made`, read 87 at a gate on 19034), `poll message=257 ... score=68 ... tick=19040 result=post outlet=Sideshows
 thing=50 figure=87 line=70` and `attempt=1 message=257 ... response=497 sample=525 line=0 tick=19040`, in the kiosk hat
-(8, 0), no tag: the original's tick, sample and props for the same file.
+(8, 0), no tag: the original's tick, sample and props as it said them on the unmodified `New Save` (`q707/orig/O2`); the
+original has not been run on this made file.
 
 | | The original | OpenTPW |
 |---|---|---|
 | Rows 238 to 257 | polled; the outlet's figure against its line | the same |
-| Row 257 on Alexah's `New Save` | said on 19040, sample 525, props (8, 0) | scored 24 on 19040 (76, one short); with the file's satisfaction made 87, said on 19040, sample 525, (8, 0) |
+| Row 257 on Alexah's `New Save` | said on 19040, sample 525, props (8, 0) | scored 24 on 19040 (76); with the file's satisfaction made 87, said on 19040, sample 525, (8, 0) |
 | Row 254 on it | slotted at 28 on 19347, after its 7,200-sweep wait from 11907 | `cooldown` on 19037 at 40 (not run to 19347) |
 | A food stall walked away from by all its customers | not run (lane A, Q743) | row 248 said on 19031 at 100 |
 | The poor rows | below nought, never said | the same |

@@ -50,19 +50,26 @@ flag `[0x008bb624] |= 0x2000000` rides into each mesh's draw entry (`DrawList_Ad
 `original/advnodes.py`): A = 1 0 0 0 | 0 -1 0 0 | 0 0 1 0 | 0.6 0.6 0.2 1 and B the identity throughout, every node's
 w column (0, 0, 0, 1), the root's axes 0.0112 (`advnodes.py` prints four places), 0.001, 0.015.
 
-**How he is lit** (Q621). Per vertex, by the park's own model lighter ("The lighting model", `park-engine.md`), and
-never past his textures. Each advisor record (`0x00790398 + slot × 0xb0`) holds a light at `+0x48`, made by the
-array's constructor `AdvisorRecord_Construct` (`0x00429a60`) as type 2 (directional) with colour (1, 1, 1, 1); `Advisor_LoadModel` (`0x00429ba0`) sets its world
-direction (`+0x2c`) to (26.667, −26.667, 800), the direction light travels, and files it in the manager
-`[0x0087a6d0]`'s list 1 (`RenderList_Add( light, 0x10 )`, `0x00429d15`), where his own renderable goes. His draw
-carries `0x2000000`, so `Light_ModelSetup` (`0x0057aa10`) chains the lights of the manager's `+0x30` and the model's own
-(`FUN_005744d0`) but skips `+0x2c`, list 7, where the sun is filed (`Light_Create`, `0x00457e70`, case 2,
-`RenderList_Add( 0x70 )`): **the sun does not light him.** `Light_SumAtVertex` (`0x005741b0`) starts from the renderer ambient
-(`0x00879ddc..e4`, in a park the theme's `AmbientLightLevel` set by `FUN_00458590`, (0.333, 0.333, 0.408) in Lost
-Kingdom), adds each directional light's colour × max(0, −(d·n)), and `Light_ModelVertexColours` (`0x00574660`) clamps
-each channel to a byte. The vertex colour then multiplies the texel: stage 0's `COLOROP` is `MODULATE` (4) at
-`0x00567e59` and `0x00568625`, and none of the 13 `COLOROP` writes in the listing is `MODULATE2X` (5). A lit face is
-its texel at most.
+**How he is lit** (Q621). Per vertex, by the park's own model lighter ("The lighting model", `park-engine.md`), and (if
+his draws do not carry the `MODULATE2X` bit, below) not past his textures. Each advisor record
+(`0x00790398 + slot × 0xb0`) holds a light at `+0x48`, made by the array's constructor `AdvisorRecord_Construct`
+(`0x00429a60`) as type 2 (directional) with colour (1, 1, 1, 1); `Advisor_LoadModel` (`0x00429ba0`) sets its world
+direction (`+0x2c`) to (26.667, −26.667, 800), the direction light travels, and files it in the manager `[0x0087a6d0]`'s
+list 1 (`RenderList_Add( light, 0x10 )`, `0x00429d15`), where his own renderable goes. His draw carries `0x2000000`, so
+`Light_ModelSetup` (`0x0057aa10`) chains the lights of the manager's `+0x30` and the model's own (`FUN_005744d0`) but
+skips `+0x2c`, list 7, where the sun is filed (`Light_Create`, `0x00457e70`, case 2, `RenderList_Add( 0x70 )`): **the sun
+does not light him.** `Light_SumAtVertex` (`0x005741b0`) starts from the renderer ambient (`0x00879ddc..e4`, in a park the
+theme's `AmbientLightLevel` set by `FUN_00458590`, (0.333, 0.333, 0.408) in Lost Kingdom), adds each directional light's
+colour × max(0, −(d·n)), and `Light_ModelVertexColours` (`0x00574660`) clamps each channel to a byte. The vertex colour
+then multiplies the texel, but by how much is not settled. Stage 0's `COLOROP` is `MODULATE` (4) at `0x00567e59` and
+`0x00568625`, `MODULATE4X` (6) at `0x00567dd8` and, on stage 1, `ADDSIGNED` (8) at `0x00568925` (the 13 constant writes of
+`SetTextureStageState`). It is also set by the lazy setter `FUN_00567a70`, which `FUN_00567620` (applying the compiled
+state word) calls at `0x005678ba`..`0x005678ca` for stage 0: **`MODULATE2X` (5) when the state word has bit `0x10000`**,
+`MODULATE` otherwise. The state-word table (`render-states.md`) does not list that bit; the texture-flag table has
+source-material bit `0x10` setting texture flag `0x10000` (`0x00575ea1`), and whether that reaches the state word of the
+advisor's draws was not traced. So "a lit face is its texel at most" is **not established**: the frames do not rule 2X out
+(the gloves' darkest tenth, (144, 145, 152), sits well above what `MODULATE` would give an ambient-only vertex on a texel
+of 231, about (77, 77, 94), though the texture's creases make that rough).
 
 **Measured in the running original** (`q621/PREDICTION.txt`, `q621/orig/`, `original/advlight.py`: the stock park,
 the buy screen's own line, then `sayas.sh 18,44,41`, read while each line played; two rounds). The ambient read
@@ -70,11 +77,15 @@ the buy screen's own line, then `sayas.sh 18,44,41`, read while each line played
 of both models, red equals green on every normal and blue less red is exactly 19 wherever blue is under 255: the
 ambient and a white light, nothing else (the sun's blue 0.847 would break it). The least lit read (85, 85, 104), the
 ambient alone. Fitted mesh by mesh in its own normal space, the light's strength is **2.00**, not 1 (|v| 1.990 to
-2.008 over 14 meshes in round 2, every normal then within 1 of `clamp( ambient + 2 × max(0, −(d·n)) )`, 0 channels
+2.008 over 15 meshes in round 2 (14 in round 1), every normal then within 1 of `clamp( ambient + 2 × max(0, −(d·n)) )`, 0 channels
 off of 1,401 in a read; the theme fly's right hand alone does not fit, 4 unsaturated normals of 82, not settled).
-Both records' lights are the same, so both reaching him would make the 2; the chain that hands list 1's lights to
-`Light_ModelSetup` was not traced. A face therefore reaches its texel at a third of full facing: his head and body
-discs, eyes and mouths read (255, 255, 255) throughout; his hands' normals averaged 155 to 172, the hard hat's 153 to
+Both records' lights are the same, so both reaching him would make the 2. That the record's light lights him is
+inferred, not traced: `FUN_00576410` files a light at `[mgr + 0x10 + 4 × (flags >> 4)]` (`0x00576522`..`0x0057652c`), so
+`0x10` goes to list 1 (`+0x14`, `0x00429d12`), and `Light_ModelSetup` chains `[mgr+0x30]` (`0x0057aa8e`), `[mgr+0x2c]`
+only without `0x3000000` (`0x0057aa96`..`0x0057aab6`) and `FUN_005744d0` (`0x0057aad0`), never `+0x14`; the chain that
+hands list 1's lights to it was not traced, nor was the sign of the fitted directions (the hats' fits and the record's
+−d differ in y). A face therefore reaches its texel at a third of full facing: his head and body
+discs, eyes and mouths read (255, 255, 255) throughout; his hands' normals averaged 153 to 172, the hard hat's 153 to
 156, the research hat's 158, the pith helmet's 144.
 
 **In his frames** (`q621/parts.py`, `parts.out`: each part's pixels of its colour class, the original's 1024 × 768
@@ -246,7 +257,7 @@ Found on the way to the cry, and it reaches well past the advisor: **park sound 
 
 `SoundCategoryFile.TryReadSample` checked the stream length against the map's length with a tolerance of `max(60 ms, 6%)`. Effect 639's record (map 288 ms, stream 366 ms) failed that check, so **the next record silently stood in for it**: 639 played `ouch2`, 640 played `Ouch3` and 641 played nothing at all, with no error reported anywhere.
 
-Across all **31 shipped categories** the stream runs **26-83 ms longer than the map**, so the floor is now **100 ms** (`LengthSlackMilliseconds`). The fix was validated by dumping every category from an unfixed tree and from the fixed tree and diffing: **only those three effects moved.** A silent substitution like this is invisible from code alone — dump and compare, do not reason about it.
+Across all **31 shipped categories** the stream runs **14-83 ms longer than the map**, so the floor is now **100 ms** (`LengthSlackMilliseconds`). The fix was validated by dumping every category from an unfixed tree and from the fixed tree and diffing: **only those three effects moved.** A silent substitution like this is invisible from code alone — dump and compare, do not reason about it.
 
 ## Loading screen
 

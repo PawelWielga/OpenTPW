@@ -281,8 +281,8 @@ public sealed class RideAnimations
 		{
 			Nodes?.Started( Array.IndexOf( _channels, channel ), clip, channel.IsIdle ? float.MaxValue : channel.AnimFrame );
 
-			// The drawn model hides a clip's hide list at a change of clip (LobbyModel.Rest); on an idle channel there is
-			// none, and the bind's hiding (0x00473117) is counted: a bought Fries Shop's construction lists its mesh 10.
+			// The drawn model hides a clip's hide list at a change of clip (LobbyModel.Rest); at a first start on a channel
+			// there is none, and the bind's hiding (0x00473117) is counted: a bought Fries Shop's construction lists its mesh 10.
 			if ( channel.IsIdle && clip.HideList.Length > 0 )
 				Unimplemented.Report( "CLIP_HIDE_LIST_ON_IDLE_CHANNEL" );
 		}

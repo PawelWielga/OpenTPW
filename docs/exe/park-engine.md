@@ -4004,7 +4004,8 @@ over the stock file gives every one of the 7,980 cells Q479 read. Cleared over o
 
 **The terrain model's meshes on that land are half lit too, by their normals** (Q619). The river's beds and banks,
 the cliffs and the rock at the back are meshes of `Terrain\base.md2` (`river*`, `newcliff*`, `volcanoe`, the grass
-strips beside them), drawn by the model pass over cells the terrain pass hides (`0x0001`). The model lighter reads no
+strips beside them; the live tree has 135 meshes with a 0.225 bin, among them the 40 `basic hoard*` hoardings, which are
+half lit only in part (Q620), `Object*`, the flowers and palms, `verge03`, the poles, railing, bridge and falls), drawn by the model pass over cells the terrain pass hides (`0x0001`). The model lighter reads no
 cell (`Light_ModelSetup` `0x0057aa10`, `Light_ModelVertexColours` `0x00574660`, `FUN_005741b0`: the ambient plus the
 scene's lights, nothing by place); the darkening is set once, at the mark. `Terrain_ScaleNormalsByHalfLight` walks the
 model's nodes (siblings `+0x8`, children `+0xc`; a transform-only node, `0x200`, has no vertices), poses each mesh's
@@ -4022,13 +4023,18 @@ does not change. Buy Land calls the mark again, so a cell bought brings its mesh
 **The water is drawn unlit, not half lit.** `DrawList_AddMaterialFaces` (`0x00580530`) gives a material's vertices
 their lit colours (the mesh's colour cache, ANDed with the channel mask) only where bit `0x1` of the material record's
 last word (`+0x0C`, FileFormats `models.md`, "Materials") is clear; where it is set, each vertex takes the channel mask
-itself, white. In `base.md2` exactly the ten water materials carry it (frame word `0x33`: every `surface*` mesh's water
-and `falls02`); the beds under them do not. Game-wide 923 of 12,954 material uses in 650 meshes of the 841 static
-models carry it, and no use carries any other value than 0 or 1 (`lib/matword.py`).
+itself, white. In `base.md2` exactly the ten water materials carry it (every `surface*` mesh's water and `falls02`; they
+sit on frame word `0x33`, which three roof and booth materials, `arrival_roof[1]`, `depart_roof[1]` and `ticket_booths[1]`,
+share with word 0); the beds under them do not. Game-wide 929 of 12,960 material uses in 656 meshes of the 847 static
+models (the 841 under `data/` plus six copies of the three UI meshes in the language folders) carry it, and no use carries
+any other value than 0 or 1 (`lib/matword.py`).
 
 **Measured in the original** (`q619/PREDICTION.txt`, `q619/orig/`, the stock park off-screen, camera (500, 500) 130 at
 rotation 90, `q619/side-by-side.png`): every normal of `river13` to `river26`, `newcliff01` to `newcliff10`, `volcanoe`
-(1,659 of its 1,672; three read NaN) and every water mesh reads 0.225 long, `road_center` (the approach) 1.0, and
+(1,659 of its 1,672 normals; `modelnodes.py` prints only a mesh's four commonest lengths, the 1,659 and three NaN, each
+NaN a bin of its own, so ten were not shown; the file holds 13 normals of length 0, which `0x00450b30`, having no zero guard,
+turns to NaN) and every water mesh reads
+0.225 long, `road_center` (the approach) 1.0, and
 `newcliff11`, across the line, 96 at 1.0 and 34 at 0.225 (`original/modelnodes.py`); a water mesh's lit colours read
 (132, 132, 144), the decode's level face. Against OpenTPW at the same camera, which lights them in full: the cliff path
 0.48 of ours, the grass strip beside the river 0.53 (green), plain rock on the volcano (53.4, 38.4, 46.6) against
@@ -4404,7 +4410,7 @@ inference, no such machine was measured. OpenTPW draws that 32 (Q618, "The origi
 
 ## The blocking unknowns, worst first
 
-1. **Which grid size is authoritative**: 96x85 (mesh), 95x84 (`.sam` MapInfo), 95x85 (the engine's own derivation). Settled for the picker (Q472): the terrain is tested over the heightfield's 96x85 cells and the cell is held below `HeightfieldWidth` and `HeightfieldHeight`, 0..94 and 0..83 ("The picker never hands the mode a cell off the map"). The camera sweep's `FUN_0042cd40` holds to the same; what else reads them is not read: of the 22 read instructions of `[0x007a0314]` in 17 functions, Q472 read three functions (`FUN_0042cd40`, `FUN_0045cdc0`, `FUN_0045d560`) and Q479 a fourth (`FUN_00450d10`, its clamp at `0x00450d4d`), which leaves 18 sites in 13 functions (`FUN_0055abf0`, with four, among them).
+1. **Which grid size is authoritative**: 96x85 (mesh), 95x84 (`.sam` MapInfo), 95x85 (the engine's own derivation). Settled for the picker (Q472): the terrain is tested over the heightfield's 96x85 cells and the cell is held below `HeightfieldWidth` and `HeightfieldHeight`, 0..94 and 0..83 ("The picker never hands the mode a cell off the map"). The camera sweep's `FUN_0042cd40` holds to the same; what else reads them is not read: of the 22 read instructions of `[0x007a0314]` in 17 functions, Q472 read three functions (`FUN_0042cd40`, `FUN_0045cdc0`, `FUN_0045d560`) and Q479 a fourth (`Terrain_MarkLandOutsidePark`, `0x00450d10`, its clamp at `0x00450d4d`), which leaves 18 sites in 13 functions (`FUN_0055abf0`, with four, among them).
 2. ~~The lighting model.~~ Settled: see "The lighting model" above. `LightNormal` is the direction light travels.
 3. ~~The diagonal-choice bit.~~ Settled: see "The triangle diagonal" above (`0x0002` drawn, `0x0004` heights).
 4. ~~`base.MD2`'s container walking.~~ Settled: the heightfield is the block the header's `0x6C` pointer names ("The heightfield lives inside base.MD2", above); nothing walks a chunk table.

@@ -443,7 +443,7 @@ public sealed class SoundCategoryFile
 
 		// The map's length and the sample's own disagree, so this is a tolerance rather than an
 		// equality. The sample is always the longer, and by an amount that does not grow with its
-		// length - by 14 to 79ms across every entry of every bank the game ships -
+		// length - by 14 to 83ms across every entry of every bank the game ships (14.4 to 82.8 ms over all 3,739) -
 		// which is what an encoder's delay and the padding of its last frame would add. So the
 		// allowance is a fixed amount, with 6% taking over on long samples. A record turned
 		// away is not just lost, because the next one found then stands in for it, so every effect after

@@ -101,8 +101,7 @@ public class SoundCategoryTests
 
 	/// <summary>
 	/// The global rides' 212 is one sample of 1,442 ms, the length the original's one-shot held for the Jungle
-	/// Spray (Q565's run); its record names one of the MPEG-1 samples, so a category that takes the scan's lists
-	/// has none. 203 is 395 ms, and 202 picks between three samples where the scan gave it 203's as its second.
+	/// Spray (Q565's run). 203 is 395 ms, and 202 picks between three samples.
 	/// </summary>
 	[TestMethod]
 	public void TheGlobalRidesPlayTheSamplesTheirRecordsName()

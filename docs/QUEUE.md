@@ -243,20 +243,29 @@ filed the items that cite it.
 - [ ] **Q652. The terrain model's meshes half lit on land outside the park, and the water drawn unlit.** From Q619
   (`park-engine.md`, "The terrain model's meshes on that land are half lit too" and "The water is drawn unlit, not half
   lit"). Give each `base.md2` mesh vertex whose cell carries the half light its normal at 0.225 long (1.0 elsewhere, the
-  cell `(int)(x / 10)`, `(int)(z / 10)` of the posed vertex, left alone off the field), the ambient untouched, so the
+  cell `x * 0.1f`, `z * 0.1f` of the posed vertex truncated as the engine does (`__ftol`; the float 0.1f in x87
+  precision, so a vertex at x in (-10, 0) is cell 0, on the field), left alone off the field), the ambient untouched, so the
   river beds and banks, the cliffs, the volcano and the grass strips read 0.517 of the sun's level face where the
   ground beside them is halved; and draw a material whose record's last word has `0x1` (`ModelFile.MaterialData.Pad`
-  today) with white for its light, unlit, everywhere it occurs (923 uses in 650 meshes game-wide, `lib/matword.py`), not
+  today) with white for its light, unlit, everywhere it occurs (929 uses in 656 meshes of the game's 847 static models, `lib/matword.py`), not
   only in the park. Again when Buy Land marks the cells (Q407). Confirm: `q619/side-by-side.png`'s two cameras in both
   games, the cliff path, the grass strip and plain rock within 0.05 of the original's ratio, the water unchanged, and
   a census of the vertices made 0.225 (the original's: every normal of `river13` to `river26`, `newcliff01` to `10`,
-  `volcanoe`, `newcliff11` 34 of 130; `original/modelnodes.py`).
+  `newcliff11` 34 of 130, `volcanoe` 1,659 of its 1,672; `original/modelnodes.py`). **A choice for the build:** the
+  original's walk (`0x00450b30`) has no zero guard, so the 102 zero-length normals on the field (`volcanoe` 13,
+  `arrival_base` and `depart_base` 7 each, `bridgeend` 64, `bridge_top` 1, `road_rhs`'s `bend01` 10, counted in
+  `base.MD2`) become NaN (0 x inf) in either branch, and stay NaN through Buy Land. What the original's lighter draws
+  for a NaN normal is not read (a live read of those vertices' cache words would settle it). The build reproduces
+  that or keeps the face normal, and says which at the site; a NaN is a deviation if it is not reproduced.
 - [ ] **Q657. Light the advisor as the original does (Q621's build).** `ui.md`, "How he is lit": per vertex, the
   theme's `AmbientLightLevel` plus 2 x max(0, -(d.n)) of white, d the record light's (26.667, -26.667, 800) taken into
   his model's space (the file's axes; `AdvisorModel`'s world has Y and Z swapped), each channel clamped to 1 and
   rounded to a byte, times the texel; no sun. Measure the lobby first (`original/advlight.py` there: the front end
   loads him once and writes its own ambient, so the strength and ambient may differ) and check his normals
-  against the original's `+0x64` ones (`advlight.py --json`). Replace `AdvisorModel`'s 1.4 and 0.3 and their comment.
+  against the original's `+0x64` ones (`advlight.py --json`). Replace `AdvisorModel`'s 1.4 and 0.3 and their comment. **First settle** whether the advisor's draws carry state-word bit
+  `0x10000`, which makes stage 0 `MODULATE2X` (`FUN_00567a70`; `ui.md`, "How he is lit"): a live read of his batch's state
+  word, or the path from `0x00575ea1` through `FUN_00590c40` to `FUN_00567620`. If they do, a lit face is up to twice its
+  texel, not at most its texel.
   Confirm: the four lines of `q621/ours.py` beside `q621/orig/r1-four.png`, each part's median and 95th percentile by
   `q621/parts.py` within 8 of the original's but the gloves' 239 (our texel's 231 at eight bits, said at the site);
   predicted first.
@@ -289,8 +298,8 @@ filed the items that cite it.
   hard hat. The hint `0x13a` left waiting as the original's needs row 257 too (Q713: its sample 525 holds the original's
   advisor from 19040 to 19076, `q602/orig-R1/line.log`), so with row 19 alone this game still says `0x13a` on 19059 and
   sample 57 later than 19084: say so, or build after Q713 (run 7 review, `review7/q602/FINDINGS.md`).
-  - **Note (Q713, built):** on that load this game's row 257 scores 24 on 19040 (sideshow 50's satisfaction 76 where the
-    original's reached 77), so it is not said and does not hold the advisor (`q713/run3-fs.out`).
+  - **Note (Q713, built):** on that load this game's row 257 scores 24 on 19040 (sideshow 50's satisfaction 76, where the
+    original said it), so it is not said and does not hold the advisor (`q713/run3-fs.out`).
 - [ ] **Q587. The karts' and the water ride's track: laid, walked and opened.** From Q581 (`park.md`, "The karts' and
   the water ride's track, buoys and race"). Replace `PLACED_TRACK_RIDE_FIRST_TRACK_CELLS`: the purchase lays the station
   (0xd or 0x12) and both mouths (0xb or 0x10) on the track grid and arms the queue; a click on a piece ("Left-click to
@@ -1944,6 +1953,38 @@ filed the items that cite it.
   buy a Loudspeaker, sell it, save without a device (`SDL_AUDIODRIVER=dummy` is not that; use a test with `Audio.Ready`
   false), load the save with sound, and `PARK_FILE_SOUND_VOICE_*` / the log show no chain for the sold speaker; the bug
   put back fails a test in `ParkVoicesTests`.
+- [ ] **Q659. Trim each decoded MPEG clip to the bank's played length (from Q147).** `AudioClip.Decode( name, data )`
+  (`AudioClip.cs:54`) takes no length and decodes until `ReadSamples` answers 0, so every MPEG entry plays its whole
+  stream, 14.4 to 82.8 ms past the bank's played length (`DecodedSize / (2 x channels x rate)`, the entry's `+0x20`),
+  over all 3,739 entries (`Mp2DurationTests`). The original clamps its read to `min( request, [voice+0x30] -
+  [voice+0x14] )` before the slot's `+0x5c` (`0x006c8429`..`0x006c8457`, FileFormats `sounds.md` lines 81-84; that
+  `+0x30` holds the bank's `+0x20` is FileFormats' claim, not re-traced). Trim each decoded clip to
+  `DecodedSize / (2 x channels)` frames. Probably inaudible (encoder padding), so minor. The only user of
+  `DecodedSize` outside the tests is `SoundBank.cs:91`'s memory estimate. Confirm: a clip's frame count against the
+  played length for the five MPEG-1 entries and a sample of MPEG-2 ones; `docs/exe/audio.md` (the decode, ~line 1444)
+  says nothing of the tail and should.
+- [ ] **Q660. Does the original free or hide a boundary record no anchor claims? (from Q620.)** At load the original clears
+  each anchor's saved handle and re-claims its piece by matching item, cell and angle (`FUN_0053b1a0` through
+  `FUN_00522f20( ..., 1 )` and `FUN_00463ab0`, which marks a match `0x10000`); `ParkBoundaryHoarding` draws every
+  173xx record without that claim. No park file to hand tells them apart (933 anchors in seven files, every one has
+  its record, no record lacks an anchor), but Q656's fresh-park writer and any edited file could. Read the users of
+  slot bit `0x10000` (for instance `0x004721b7`, `test [eax+4], 0x10000`) in Ghidra to settle whether an unclaimed
+  record is freed or hidden; if it is, build the claim (pair each type 25 cell's `mTileData` with the record at its
+  shifted cell and angle, count an anchor with no match) or keep the deviation said at the site.
+- [ ] **Q661. Rest at a loop's restart in view (from Q622).** The original restores at a loop's restart in view:
+  `0x00473840`..`0x00473848` call `FUN_00472f60` with the same role and entry and flags `1` (`| 8` only off-screen),
+  which reaches `FUN_00472310` with the outgoing clip the incoming one: it clears `0x10` on every tracked and listed
+  node and re-hides the hide list. `RideAnimations.PoseChannel` rests only when the clip reference changes, so a loop's
+  restart shows and hides nothing. No Lost Kingdom placed thing loops a clip whose visibility track starts after
+  frame 0 (the only such clips are three vehicles' `m3`, `coconutc` and `mamfounte`), so nothing differs on screen
+  there. Build it where the loop is known, and carry the start's `0x4`/`0x8` with it (Q658's seam). Confirm: a
+  looped clip with a visibility track after frame 0 in both games, or a read of the original's node words at the
+  restart.
+- [ ] **Q662. Run the original on the made file for the advisor's row 257 (from Q713; beside Q743's file B).** The docs now
+  say the original's tick 19040, sample 525 and props (8, 0) are from the unmodified `New Save` (`q707/orig/O2`); the
+  original has never loaded `files/outlets-D.TPWS` (sideshow 50's thirty satisfaction days made 40). Load it in the
+  original with `loadfile.sh` and read row 257's record beside file B (row 248). Also read which sideshow the
+  original's row 257 picked on the unmodified file and its figure (the docs say only "some sideshow at 77 or more").
 
 ## B. Docs and comments
 

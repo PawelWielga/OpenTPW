@@ -1077,6 +1077,38 @@ public class ParkClosedRideTests
 	}
 
 	/// <summary>
+	/// The advisor's shop and sideshow facts add the newest thirty finished days of customers and walk-aways, not one
+	/// fewer, not one more (<c>0x004cabbc</c>..<c>0x004cabcf</c>, <c>ebx = 0x1e</c>): thirty-one days rolled with a different
+	/// count each, so the oldest day is the one that is left out.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> <c>LastDays( 1 )</c> or <c>LastDays( 29 )</c> for either count in <c>ParkPeople.AdvisorFacts</c>.</remarks>
+	[TestMethod]
+	public void TheAdvisorsOutletFactsAddTheNewestThirtyDays()
+	{
+		var park = Open();
+
+		try
+		{
+			var rings = park.State.RingsFor( 16 );
+
+			// Day d (1 oldest, 31 newest) has d customers and (d * 7) % 5 + 1 walk-aways.
+			for ( var day = 1; day <= 31; ++day )
+			{
+				for ( var i = 0; i < day; ++i ) rings.CountCustomer();
+				for ( var i = 0; i < (day * 7) % 5 + 1; ++i ) rings.CountWalkAway();
+				rings.Roll();
+			}
+
+			var stall = park.People.AdvisorFacts().Outlets!.All[0];
+			Assert.AreEqual( (495, 90), (stall.Customers, stall.WalkAways), "days 2 to 31: 495 customers, 90 walk-aways" );
+		}
+		finally
+		{
+			Close( park );
+		}
+	}
+
+	/// <summary>
 	/// What the advisor's row 1 reads of the shipped park (<c>FUN_004c9050</c>, <c>FUN_004ca8e0</c>,
 	/// <c>FUN_004c91c0</c>): its door, its things of a ride's item and of a sideshow's, and the guests in state 3
 	/// standing on either ticket booth's cell: not one beside a booth, and not one on a booth judging the fee.

@@ -81,9 +81,8 @@ public class ParkScreamChainTests
 
 	/// <summary>
 	/// Every sample record the walk reads names a bank of its category and a sample in it, and the
-	/// categories play these. The scan by content turns away a record whose sample's length is not the map's
-	/// (the five MPEG-1 samples), so it left the global rides' 203, 211 and 212 and the lobby's 4 empty, and
-	/// the effects after a variation it could not see took the wrong lists.
+	/// categories play these. The scan by content cannot see a variation with no samples, so the effects after hallow's
+	/// 98 and 103 and space's 112 take the wrong lists, and hallow's 188 and 190 and space's 191 are left empty.
 	/// </summary>
 	[TestMethod]
 	public void EveryWalkedSampleRecordNamesASampleOfItsCategory()

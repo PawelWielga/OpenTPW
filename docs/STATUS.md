@@ -50,8 +50,8 @@ Only the item just landed is here. Every earlier item's account is in `docs/hist
 | | | measured |
 |---|---|---|
 | Opcodes | **78** of 106 | 2026-10-20, Q553 (`FADEOBJ`), `case Opcode.` labels vs enum members |
-| Tests | **3887**, 0 fail, 0 skip with the game | 2026-10-24, Q622 rebased, alone in a worktree |
-| Tests without the game | **1379** ran, **2508** skipped, of 3887 | 2026-10-24, Q622 rebased, alone in a worktree |
+| Tests | **3890**, 0 fail, 0 skip with the game | 2026-10-25, run 9 review fix C, alone in a worktree |
+| Tests without the game | **1379** ran, **2511** skipped, of 3890 | 2026-10-25, run 9 review fix C, alone in a worktree |
 | Build warnings | 121 in the main tree; 131 in a fresh worktree, the ten more NuGet's advisories on ModKit's ImageSharp | 2026-10-10 (the worktree's 131 and the main tree's 121 at Q340, the worktree's 131 and the main tree's 121 again at Q343, at Q344 and at Q345, and the worktree's 131 at Q346 and, with the main tree's 121, at Q347, at Q348, at Q349, at Q351 and at Q352, 2026-10-13) |
 | Park load | **2.5 s**, worst phase `terrain` 0.72 s | 2026-09-21, three jungle runs |
 
