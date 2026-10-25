@@ -86,11 +86,6 @@ filed the items that cite it.
   picks up the path tool, as the original's does (`0x00524a63`). What did you see? (a) right after placing a ride, the
   squares or pointer looked like the path tool's; (b) after a click the queue tool was gone and further clicks laid path;
   (c) path pieces appeared where you laid queue; (d) something else - please describe.
-- [ ] **Q637. The gadget's red aerial jumps between positions where the original animates it.** From Alexah's play test,
-  2026-10-21 (note 24). A documented deviation with no queue line: the top and the later tags are put down at once,
-  where the original plays them down by streams `0x007502f0` and `0x00752e48` (`advisor-park.md:836, :841, :891`;
-  `source/OpenTPW/UI/Park/ParkGadget.cs:62-68`; `hud.md:249-257`). Build the two streams. Confirm: a film of closing a
-  tag and of a tag arriving, beside the original's (`record.sh`).
 - [ ] **Q638. A tag leaving the gadget does not sparkle before it goes.** From Alexah's play test, 2026-10-21 (note 27).
   The original puts effect `0x5b` over the tag five seconds before its end, shown and hidden with the tag
   (`advisor-park.md:892`; `hud.md:1308-1313`); here it is counted, `TAG_ENDING_PARTICLE`
@@ -298,6 +293,12 @@ filed the items that cite it.
   with no catalogue row (the gate's booths) reaches category 13 or 14, not 4. Confirm: `q635/confirm.py` (U1 becomes the
   Belly Bounce in the hand, item 1100, no window; then put down for 500 and the queue tool), twice, and the bank at 50
   refused with the sound, beside `q635/orig/b-run.out` and `c2-run.out`.
+- [ ] **Q673. A tag put on the aerial shows at once here, about half a second after the top lifts in the original.**
+  Seen by Q637 in the original's film (`q637/orig/film-on-sheet.png`: the top lifted at frame 212, the tag's picture
+  from frame 228, 0.53 s on, with sparkles about it). The mast's `0x100001` arm links the tag and posts it message 6
+  with 1 to arrive 500 ms later (`FUN_00658df4`, `0x004a1292`; `hud.md`, "The aerial is built down"); what message 6
+  does to the tag and what is shown before it is not read. Here `ParkGadget.BuildTags` shows the tag at once. Decode
+  message 6 in the tag's handler (`FUN_0048dae0`), then build it. Confirm: the put-on filmed in both games.
 - [ ] **Q690. Keypad 5 and Home reset the park camera, as the original's.** From the Q631 review (run 9). Camera-table
   rows 19 and 24 (`lib/bindtables.py`: actions `0x14` key `0x0065`, `0x18` key `0x2400`) run `0x0042a500`, which sets bit
   `0x100` of `[0x00790aac]`; the update answers at `0x0042b518`: zoom `[0x007909ec]` = 110.0, asked rotation

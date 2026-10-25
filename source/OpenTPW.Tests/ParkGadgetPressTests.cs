@@ -387,6 +387,78 @@ public class ParkGadgetPressTests
 	}
 
 	/// <summary>
+	/// <b>A tag put on squashes the red top, and a tag taken off squashes the top and every tag above it</b>
+	/// (<c>LAB_004a11e0</c> <c>0x004a135b</c>, <c>FUN_0048dae0</c> <c>0x0048dcda</c>, <c>0x0048dd06</c>): the
+	/// streams at 0x00752e48 and 0x007502f0, the left and right out and the top down by 2, 4 ... 12, 8, 4, 6, 8, 6, 4,
+	/// 2, 0, a row on the first frame more than 50 ms after the last on the top and 20 ms on a tag; a tag put on while the top plays does not start it
+	/// again, a tag taken off does; a tag below the one gone keeps still.
+	/// </summary>
+	/// <remarks>
+	/// <b>Mutations:</b> no squash; the top's stream at a tag's 20 ms; a tag's at the top's 50; the bottom moved too; the
+	/// put-on stream started over; the take-off's not; the tags below the one gone squashed; a row on the ideal clock, not by frames.
+	/// </remarks>
+	[TestMethod]
+	public void ATagPutOnOrTakenOffSquashesTheTopAndTheTagsAbove()
+	{
+		var (stack, gadget) = AGadget();
+		var tags = gadget.Tags = new ParkTags();
+		var at = 0.89f;
+		// A frame each 10 ms up to the time given, so a 50 ms row comes on the frame 60 ms after the last and a 20 ms one 30 ms after.
+		void Until( float end )
+		{
+			for ( ; at < end - 0.0005f; ) Frame( stack, false, new Vector2( 1000, 100 ), at = System.MathF.Round( (at + 0.01f) * 100f ) / 100f );
+		}
+		UI.UiRect Top() => Find( gadget, 0x2e ).Rect;
+
+		Until( 0.99f );
+		tags.Said( 68, 13, 1000 );
+		Until( 1.05f );
+		Assert.AreEqual( new UI.UiRect( 77, 773, 161, 901 ), Top(), "no row yet: a row comes only more than 50 ms on" );
+		Until( 1.06f );
+		Assert.AreEqual( new UI.UiRect( 75, 775, 163, 901 ), Top(), "a row of two, the bottom still" );
+
+		tags.Said( 68, 14, 1100 );
+		Until( 1.18f );
+		Assert.AreEqual( new UI.UiRect( 71, 704, 167, 826 ), Top(), "three rows from the first tag: the second did not start it again" );
+		Until( 1.36f );
+		Assert.AreEqual( new UI.UiRect( 65, 710, 173, 826 ), Top(), "six rows, twelve" );
+		Until( 1.42f );
+		Assert.AreEqual( new UI.UiRect( 69, 706, 169, 826 ), Top(), "the seventh row back four" );
+		Until( 1.78f );
+		Assert.AreEqual( new UI.UiRect( 75, 700, 163, 826 ), Top(), "thirteen rows" );
+		Until( 1.95f );
+		Assert.AreEqual( new UI.UiRect( 77, 698, 161, 826 ), Top(), "fourteen and the end: at rest" );
+		StringAssert.Contains( gadget.AerialDrawn(), "drawn: top=77,698,161,826 " );
+
+		tags.Said( 68, 15, 2000 );
+		Until( 2.99f );
+		tags.Hide( tags.Standing[0], 3000 );
+		Until( 3.5f );
+		Assert.AreEqual( 2, tags.Standing.Count );
+		Until( 3.56f );
+		Assert.AreEqual( new UI.UiRect( 80, 913, 158, 974 ), Find( gadget, 900 ).Rect, "the tag above moved down and two rows in at 20 ms" );
+		Assert.AreEqual( new UI.UiRect( 80, 838, 158, 899 ), Find( gadget, 901 ).Rect, "and the one above it" );
+		Assert.AreEqual( new UI.UiRect( 75, 700, 163, 826 ), Top(), "the top one row in at 50 ms" );
+		Until( 3.68f );
+		Assert.AreEqual( new UI.UiRect( 72, 921, 166, 974 ), Find( gadget, 900 ).Rect, "six rows" );
+		Assert.AreEqual( new UI.UiRect( 71, 704, 167, 826 ), Top() );
+		Until( 3.85f );
+		tags.Hide( tags.Standing[1], 3850 );
+		Until( 3.89f );
+		Assert.AreEqual( new UI.UiRect( 82, 911, 156, 974 ), Find( gadget, 900 ).Rect, "thirteen rows: two left" );
+		Until( 3.92f );
+		Assert.AreEqual( new UI.UiRect( 84, 909, 154, 974 ), Find( gadget, 900 ).Rect, "fourteen: at rest" );
+		StringAssert.Contains( gadget.AerialCensus(), "top=77,698,161,826 tag900=84,909,154,974/", "the census reads the places at rest" );
+
+		// The second goes while the top's stream still plays (its thirteenth row at 4280): started over.
+		Until( 4.35f );
+		Assert.AreEqual( 1, tags.Standing.Count );
+		Until( 4.41f );
+		Assert.AreEqual( new UI.UiRect( 75, 775, 163, 901 ), Top(), "one row of the stream started again" );
+		Assert.AreEqual( new UI.UiRect( 84, 909, 154, 974 ), Find( gadget, 900 ).Rect, "the tag below the one gone keeps still" );
+	}
+
+	/// <summary>
 	/// <b>A tag's right click hides it, its left click opens the message bar and takes nothing off, and the top's
 	/// right click takes every tag off, the oldest first, a tenth of a second apart</b> (<c>FUN_0048dae0</c>,
 	/// <c>FUN_004a1190</c>).

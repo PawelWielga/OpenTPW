@@ -10123,6 +10123,18 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   draws the bar (722,546)-(957,565), read live from its control's `+0x30` and its skin (`hud.md`, "The skill bar
   `0x2482`"); ours drew the whole 39 and now stands in 10 (`ParkHireScreen.BarInset`). Confirmed: the original's frame
   lights rows 273-282 at 768, ours 256-264 at 720 down three columns (main's 251-269); `q636/side-by-side.png`.
+- [x] **Q637. The gadget's red aerial jumps between positions where the original animates it.** From Alexah's play test,
+  2026-10-21 (note 24). A documented deviation with no queue line: the top and the later tags are put down at once,
+  where the original plays them down by streams `0x007502f0` and `0x00752e48` (`advisor-park.md:836, :841, :891`;
+  `source/OpenTPW/UI/Park/ParkGadget.cs:62-68`; `hud.md:249-257`). Build the two streams. Confirm: a film of closing a
+  tag and of a tag arriving, beside the original's (`record.sh`).
+  **Done (2026-10-25, a22).** The two streams are one squash, not a slide: fourteen rows that put the control's left
+  and right out and its top down by 2 to 12 and back, its bottom still, the moves themselves at once in both games
+  (`hud.md`, "The aerial's squash"). Built (`ParkGadget.Squash`): the red top's at 50 ms as a tag comes (not started
+  over) and goes (started over), each tag above one gone at 20 ms, a row on the first frame more than the interval
+  after the last as `FUN_0065e9a4` steps it. The original (`q637/orig/`, `original/aerialpoll.py`, `record.sh`) read
+  (65, 785, 173, 901) and (65, 860, 173, 976) at the peaks, each stream 1.00 s; ours the same rectangles, about
+  0.8 s at its frame rate (`q637/run3`, 4 of 4; `side-by-side.png`).
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

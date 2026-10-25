@@ -1378,6 +1378,22 @@ word names, which costs one interval) or -9996 (`FUN_0065d3a3`). The pivot is th
 (`FUN_0065f345`). It moves this tag and the three language banners (`park-engine.md`, the end of a park; the pause
 overlay above).
 
+**The aerial's squash** (Q637). A row is applied on the first frame more than the stream's interval after the last
+row (or the start: `+0xf4`, compared at `0x0065e9fc`), so never two in a frame; the offsets a stream has added are kept at
+`+0xf8` (four shorts) and taken off at its end and when another is started over it (`FUN_0065e72d`); `+0x135` says one
+plays, `+0xec` is its row. The streams at `0x007502f0` and `0x00752e48` hold the same fourteen rows: six of
+(-2, 2, 2, 0), two of (4, -4, -4, 0), two of (-2, 2, 2, 0), four of (2, -2, -2, 0), and the end: the control's left
+and right go out and its top down by 2, 4 ... 12, then 8, 4, 6, 8, 6, 4, 2, 0, its bottom still, a squash and a
+spring back to where it stands. They are played as the aerial changes (`advisor-park.md`, "The mast"): a tag put on
+plays `0x00752e48` on the red top at 50 ms unless one plays on it (`0x004a135b`); a tag taken off moves each later
+tag down at once and plays `0x007502f0` on it at 20 ms unless one plays there, the swell of the tag on show among
+them (`0x0048dcda`), and on the red top at 50 ms, started over (`0x0048dd06`). Measured (`q637/orig/`,
+`original/aerialpoll.py` beside a `record.sh` film, Q309's broken Belly Bounce): the top read (77, 773, 161, 901) as
+the tag was put on, (65, 785, 173, 901) at row 6 and back at rest with no stream 1.00 s on, a row each 66.7 ms (two
+drawn frames under the 30-a-second cap); as it went, (77, 848, 161, 976), (65, 860, 173, 976) at row 6, at rest
+1.00 s on. **OpenTPW** (`ParkGadget.Squash`) steps the same rows by the same rule on its own frames, so a row comes
+each 55 ms or so at its usual frame rate, the whole in about 0.8 s (`q637/run3`).
+
 ### The arm's handler, `0x004a14f0`
 
 In no function; a jump table over messages `0xa` to `0x100`. The arm's byte `+0x134` is its state: 0 at rest, 2

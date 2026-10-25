@@ -63,8 +63,8 @@ namespace OpenTPW.UI;
 /// is a msgtag icon on the mast, which lifts the red top by the icon's height and ten (LAB_004a11e0, 0x100001); a
 /// right click on a tag hides it and takes it off half a second on, and one on the top deletes them all
 /// (FUN_004a1190) - its help row says so. A tag's left click opens the message bar, and the tag on show swells
-/// and shrinks (the stream at 0x007502b8). The top and the tags above one taken off are put down at once, where
-/// the original plays them down (the streams at 0x007502f0 and 0x00752e48).
+/// and shrinks (the stream at 0x007502b8). The top and the tags above one taken off are put down at once, as the
+/// original's are, and then squash and spring back on its streams at 0x007502f0 and 0x00752e48 (<see cref="Squash"/>).
 /// </para>
 /// <para>
 /// <b>The body, the arm and the aerial stop the pointer</b>, as every shown control of the original's does: the body
@@ -1191,6 +1191,38 @@ internal sealed class ParkGadget : UiWindow
 	/// </summary>
 	internal static int Swell( long sinceOpened ) => (int)(sinceOpened / 100 % 7) switch { 1 or 5 => 2, 2 or 4 => 4, 3 => 6, _ => 0 };
 
+	/// <summary>
+	/// The stream at 0x007502f0 or at 0x00752e48 (the two hold the same fourteen rows) as it plays on a control: how far
+	/// it stands squashed, its left out by <see cref="Value"/>, its top down and its right out by the same, its bottom
+	/// where it was. Six rows of two, two back of four, two of two and four back of two: 2, 4 ... 12, 8, 4, 6, 8, 6, 4,
+	/// 2, 0, and the end row. As FUN_0065e9a4 steps it: a row on a frame more than the interval after the last row's
+	/// (or the start's), so never two in one frame (the original at 30 frames a second plays a 50 ms row each 67 ms).
+	/// </summary>
+	internal sealed class Squash( long start, int interval )
+	{
+		private static readonly int[] Rows = [0, 2, 4, 6, 8, 10, 12, 8, 4, 6, 8, 6, 4, 2, 0];
+		private long _last = start;
+		private int _row;
+
+		internal int Interval => interval;
+		internal int Value => Rows[_row];
+
+		/// <summary>One frame at <paramref name="now"/>: false once the end row is reached and nothing plays.</summary>
+		internal bool Step( long now )
+		{
+			if ( now - _last <= interval )
+				return true;
+
+			_last = now;
+			return ++_row < Rows.Length;
+		}
+	}
+
+	/// <summary>The red top's stream interval, put on and taken off alike (0x004a1359, 0x0048dd04).</summary>
+	internal const int TopSquashInterval = 50;
+	/// <summary>The stream interval of a tag moved down as one below it goes (0x0048dcd8).</summary>
+	internal const int TagSquashInterval = 20;
+
 	/// <summary>The bar, its text (a line break written as \n) and buttons, the arm's handle, its move and what it carries, for the debug console's <c>tags</c>.</summary>
 	internal string BarCensus() => $"bar: out={(BarOut ? 1 : 0)} rect={Edges( _bar.Rect )} arm={Edges( _arm.Rect )} handle={Edges( _armEnd.Children[0].Rect )}"
 		+ $" move={Moving} carried={(_onArm is { } carried ? $"{carried.Id:x}@{Edges( carried.Rect )}/shown={(carried.Visible ? 1 : 0)}/depth={carried.DrawDepth}/{Behind( carried )}" : "none")} waiting={_waiting?.Id.ToString( "x" ) ?? "none"}"
@@ -1254,6 +1286,15 @@ internal sealed class ParkGadget : UiWindow
 	private readonly List<UiRect> _tagRects = [];
 	private ParkTags? _tagsGiven;
 	private ParkTags? _tagsShown;
+	/// <summary>The red top's place at rest, which its squash plays about.</summary>
+	private UiRect _topRest = new( 77, 848, 161, 976 );
+	/// <summary>The red top's stream, or null with none playing.</summary>
+	private Squash? _topSquash;
+	private int? _topSquashLogged;
+	/// <summary>Each tag's stream, where one plays.</summary>
+	private readonly Dictionary<ParkTags.Tag, Squash> _tagSquash = [];
+	/// <summary>The tags standing at the last build, oldest first, to tell which went.</summary>
+	private List<ParkTags.Tag> _standingShown = [];
 
 	/// <summary>The tags the mast shows: the running park's, or the list a test hands the gadget.</summary>
 	internal ParkTags? Tags { get => _tagsGiven ?? Level.Current?.ParkState?.Tags; set => _tagsGiven = value; }
@@ -1284,15 +1325,79 @@ internal sealed class ParkGadget : UiWindow
 		if ( tags != _tagsShown || tags.Changes != _tagChangesShown )
 			BuildTags( tags );
 
-		// The tag on show, swelling and shrinking about its own rectangle.
+		var now = Time.WallMilliseconds;
+
+		// The tag on show, swelling and shrinking about its own rectangle; another squashed while its stream plays.
 		for ( var i = 0; i < _tagControls.Count; ++i )
 		{
 			var tag = tags.Standing[i];
-			var swell = tag == tags.OnShow ? Swell( Time.WallMilliseconds - tag.OpenedAt ) : 0;
 			var own = _tagRects[i];
 
-			_tagControls[i].Rect = new UiRect( own.Left - swell, own.Top - swell, own.Right + swell, own.Bottom + swell );
+			if ( tag == tags.OnShow )
+			{
+				// The swell is a stream of its own on the same control, started over whatever played (FUN_0065e72d).
+				_tagSquash.Remove( tag );
+				var swell = Swell( now - tag.OpenedAt );
+				_tagControls[i].Rect = new UiRect( own.Left - swell, own.Top - swell, own.Right + swell, own.Bottom + swell );
+				continue;
+			}
+
+			if ( _tagSquash.TryGetValue( tag, out var squash ) && !squash.Step( now ) )
+				_tagSquash.Remove( tag );
+			_tagControls[i].Rect = Squashed( own, _tagSquash.TryGetValue( tag, out squash ) ? squash.Value : 0 );
 		}
+
+		if ( _topSquash != null && !_topSquash.Step( now ) )
+			_topSquash = null;
+		int? topSquash = _topSquash?.Value;
+		_mastTop.Rect = Squashed( _topRest, topSquash ?? 0 );
+
+		if ( topSquash != _topSquashLogged )
+			Log.Info( $"Park gadget: top squash {topSquash?.ToString() ?? "none"} drawn {Edges( _mastTop.Rect )} at {now}" );
+		_topSquashLogged = topSquash;
+	}
+
+	private static UiRect Squashed( UiRect rest, int squash ) => new( rest.Left - squash, rest.Top + squash, rest.Right + squash, rest.Bottom );
+
+	/// <summary>
+	/// The streams a change of the list starts, measured against the list as it was last built: a tag put on plays the
+	/// red top's at 0x00752e48 unless one plays on it already (LAB_004a11e0, 0x004a135b); a tag taken off plays the
+	/// stream at 0x007502f0 on each tag above it that plays none, and on the red top, started over (FUN_0048dae0,
+	/// 0x0048dcda, 0x0048dd06). Another park's list, a park loaded, starts none.
+	/// </summary>
+	private void StartSquashes( ParkTags tags, long now )
+	{
+		if ( tags != _tagsShown )
+		{
+			_tagSquash.Clear();
+			_topSquash = null;
+			return;
+		}
+
+		var standing = tags.Standing;
+		var gone = _standingShown.FindIndex( tag => !standing.Contains( tag ) );
+
+		if ( gone >= 0 )
+		{
+			foreach ( var tag in _standingShown.Skip( gone + 1 ) )
+				if ( standing.Contains( tag ) && tag != tags.OnShow && !_tagSquash.ContainsKey( tag ) )
+				{
+					_tagSquash[tag] = new Squash( now, TagSquashInterval );
+					Log.Info( $"Park gadget: tag squash stream 0x7502f0 at {TagSquashInterval} ms on tag {tag.Row.Id}" );
+				}
+
+			_topSquash = new Squash( now, TopSquashInterval );
+			Log.Info( $"Park gadget: top squash stream 0x7502f0 at {TopSquashInterval} ms, a tag gone" );
+		}
+
+		if ( standing.Any( tag => !_standingShown.Contains( tag ) ) && _topSquash == null )
+		{
+			_topSquash = new Squash( now, TopSquashInterval );
+			Log.Info( $"Park gadget: top squash stream 0x752e48 at {TopSquashInterval} ms, a tag put on" );
+		}
+
+		foreach ( var tag in _tagSquash.Keys.Where( tag => !standing.Contains( tag ) ).ToList() )
+			_tagSquash.Remove( tag );
 	}
 
 	private void BuildTags( ParkTags tags )
@@ -1301,6 +1406,8 @@ internal sealed class ParkGadget : UiWindow
 		// The new tag's sound, effect 0x1e of the interface's own category (FUN_0048eb20).
 		if ( tags == _tagsShown && tags.Made > _tagsHeard ) UiSounds.NewTag();
 		_tagsHeard = tags.Made;
+
+		StartSquashes( tags, Time.WallMilliseconds );
 
 		foreach ( var control in _tagControls )
 		{
@@ -1314,8 +1421,10 @@ internal sealed class ParkGadget : UiWindow
 		_tagChangesShown = tags.Changes;
 
 		var standing = tags.Standing;
+		_standingShown = standing.ToList();
 		var top = MastBottom - 8 - TagStep * standing.Count;
-		_mastTop.Move( 0, top - _mast.Rect.Top );
+		_topRest = new UiRect( _topRest.Left, top - (_topRest.Bottom - _topRest.Top), _topRest.Right, top );
+		_mastTop.Rect = _topRest;
 		_mast.Rect = new UiRect( MastLeft, top, MastRight, MastBottom );
 
 		for ( var i = 0; i < standing.Count; ++i )
@@ -1355,8 +1464,12 @@ internal sealed class ParkGadget : UiWindow
 	}
 
 	/// <summary>Where the mast, its top and each tag stand on the virtual screen, for the debug console's <c>tags</c>.</summary>
-	internal string AerialCensus() => $"aerial: mast={Edges( _mast.Rect )} top={Edges( _mastTop.Rect )} "
+	internal string AerialCensus() => $"aerial: mast={Edges( _mast.Rect )} top={Edges( _topRest )} "
 		+ string.Join( " ", _tagControls.Select( ( control, i ) => $"tag{control.Id}={Edges( _tagRects[i] )}/frame={control.Frame}/shown={(control.Visible ? 1 : 0)}" ) );
+
+	/// <summary>The rectangles drawn now, squashed or swollen, for the debug console's <c>tags</c>.</summary>
+	internal string AerialDrawn() => $"drawn: top={Edges( _mastTop.Rect )} "
+		+ string.Join( " ", _tagControls.Select( control => $"tag{control.Id}={Edges( control.Rect )}" ) );
 
 	private static string Edges( UiRect rect ) => $"{rect.Left},{rect.Top},{rect.Right},{rect.Bottom}";
 

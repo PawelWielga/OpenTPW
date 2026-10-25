@@ -5,6 +5,11 @@ newest first. The pre-commit hook (`tools/status-sweep.py`) moves an item's acco
 written above it. **Grep it by Q-number; never read it whole.** Each account is frozen at its item's date: a
 later item may have run what an earlier one lists as untested.
 
+- Q636 (the hire screen's skill bar): the original off-screen and ours on the desktop, the stock park's hire screen
+  opened by real clicks, its first row picked. Not looked at: Full Simulation (the builder asks no game mode), a window
+  other than 1280 x 720, the bar at nought or full, the inset helper's other 31 calls, swept by
+  the review instead: 18 built and inset as the original's, the ride window's four gauges not (Q693), 9 in windows not
+  built (Q450, Q31b).
 - Q635 (Ctrl+click, decode only): the original off-screen, the stock park, Instant Action: the Belly Bounce cloned and put
   down twice over two loads, the Drinks Shop cloned and put down with Ctrl held and then plain, a dearer clone refused at
   a held bank of 50; ours on the desktop, main's build, the same clicks. Not looked at: the refusal's sound by ear or the

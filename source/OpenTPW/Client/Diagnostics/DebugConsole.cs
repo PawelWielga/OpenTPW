@@ -682,6 +682,7 @@ public static class DebugConsole
 				// The tags on the gadget's aerial, the oldest first, and where the gadget has drawn them.
 				Reply( ParkState.Current?.Tags.Census( Time.WallMilliseconds ) ?? "no park" );
 				Reply( Level.Current?.Hud?.Children.OfType<UI.ParkFrontEnd>().FirstOrDefault()?.Gadget.AerialCensus() ?? "no gadget" );
+				Reply( Level.Current?.Hud?.Children.OfType<UI.ParkFrontEnd>().FirstOrDefault()?.Gadget.AerialDrawn() ?? "no gadget" );
 				Reply( Level.Current?.Hud?.Children.OfType<UI.ParkFrontEnd>().FirstOrDefault()?.Gadget.BarCensus() ?? "no gadget" );
 				break;
 
