@@ -117,7 +117,7 @@ internal sealed class ParkTags
 	internal const int DeclineButton = 0x1b;
 
 	/// <summary>The table the game's running language keeps the tags' strings in (DAT_0078ba90).</summary>
-	internal const string StringsPath = "Language/English/TAG_SYSTEM.str";
+	internal static string StringsPath => GameLanguage.PathFor( "TAG_SYSTEM.str" );
 
 	internal sealed class Tag
 	{

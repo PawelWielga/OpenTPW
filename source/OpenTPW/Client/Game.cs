@@ -1,4 +1,4 @@
-﻿namespace OpenTPW;
+namespace OpenTPW;
 
 /// <summary>
 /// Handles the creation and management of various systems, including the game
@@ -45,6 +45,12 @@ internal static class Game
 		FileSystem = new BaseFileSystem( GameDir.Data );
 		FileSystem.RegisterArchiveHandler<WadArchive>( ".wad" );
 		FileSystem.RegisterArchiveHandler<SdtArchive>( ".sdt" );
+
+		if ( !GameLanguage.Configure( args ) )
+		{
+			Environment.ExitCode = 1;
+			return;
+		}
 
 		//
 		// Register save data directory - save\ beside the game's data, where the original keeps it, so that a

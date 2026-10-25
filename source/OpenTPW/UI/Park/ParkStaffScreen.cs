@@ -349,7 +349,7 @@ internal sealed class ParkStaffScreen : UiWindow
 	private void LogOrder() => Log.Info( $"Staff list: kind {_kind}, {_list.Census()}; picked {_list.Selected}" );
 
 	/// <summary>The status words' table, the one the boot loads as <c>mUIStaffStates</c> (table <c>0x3ed</c>).</summary>
-	internal const string StatusTable = "Language/English/STAFFSTATES.str";
+	internal static string StatusTable => GameLanguage.PathFor( "STAFFSTATES.str" );
 
 	private static StringFile? _statusWords;
 

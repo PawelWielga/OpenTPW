@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../source/OpenTPW.Common/GlobalNamespace.cs" Link="Production/GlobalNamespace.cs" />
+    <Compile Include="../../source/OpenTPW.Common/Logger.cs" Link="Production/Logger.cs" />
+    <Compile Include="../../source/OpenTPW.Common/Utils/ExpandedMemoryStream.cs" Link="Production/ExpandedMemoryStream.cs" />
+    <Compile Include="../../source/OpenTPW.Common/Utils/BaseParser.cs" Link="Production/BaseParser.cs" />
+    <Compile Include="../../source/OpenTPW.Common/Files/BaseFileSystem.cs" Link="Production/BaseFileSystem.cs" />
+    <Compile Include="../../source/OpenTPW.Common/Files/IArchive.cs" Link="Production/IArchive.cs" />
+    <Compile Include="../../source/OpenTPW.Common/Files/IFileFormat.cs" Link="Production/IFileFormat.cs" />
+    <Compile Include="../../source/OpenTPW.Common/Files/ArchiveItem.cs" Link="Production/ArchiveItem.cs" />
+    <Compile Include="../../source/OpenTPW.Common/Files/ArchiveFile.cs" Link="Production/ArchiveFile.cs" />
+    <Compile Include="../../source/OpenTPW.Files/Public/BaseFormat.cs" Link="Production/BaseFormat.cs" />
+    <Compile Include="../../source/OpenTPW.Files/Public/StringFile.cs" Link="Production/StringFile.cs" />
+    <Compile Include="../../source/OpenTPW.Files/Formats/String/BFSTReader.cs" Link="Production/BFSTReader.cs" />
+    <Compile Include="../../source/OpenTPW.Files/Formats/String/BFMUReader.cs" Link="Production/BFMUReader.cs" />
+    <Compile Include="../../source/OpenTPW/Client/GameLanguage.cs" Link="Production/GameLanguage.cs" />
+    <Compile Include="../../source/OpenTPW/Client/Localization.cs" Link="Production/Localization.cs" />
+    <Compile Include="../../source/OpenTPW/Client/Locale/UIStrings.cs" Link="Production/UIStrings.cs" />
+  </ItemGroup>
+</Project>

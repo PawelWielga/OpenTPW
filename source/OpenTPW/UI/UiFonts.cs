@@ -6,7 +6,7 @@ namespace OpenTPW.UI;
 /// <para>
 /// A control names a font by slot, and 0x00485a70 hands back that slot out of whichever of four sets
 /// suits the resolution. The language loader (0x00419710) loads each set by resource id, and the ids
-/// go through Language\English\residx.dat - whose entries run 1021 upwards over GAME5AA.bf4 to
+/// go through the selected language folder's residx.dat - whose entries run 1021 upwards over GAME5AA.bf4 to
 /// POSTCARD.bf4 in the order its names are listed. It picks the set from the resolution: the smallest
 /// for the lowest, the largest for 1024x768 and up. That the four sets are for 512x384, 640x480,
 /// 800x600 and anything bigger is inferred from the options screen offering exactly those steps.

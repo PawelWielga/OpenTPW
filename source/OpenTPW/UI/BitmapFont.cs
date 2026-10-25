@@ -33,7 +33,6 @@ internal sealed class BitmapFont
 {
 	private const uint Magic = 0x42463446; // "F4FB"
 
-	private const string Folder = "Language/English";
 
 	private static readonly Dictionary<string, BitmapFont?> Loaded = new( StringComparer.OrdinalIgnoreCase );
 
@@ -50,19 +49,21 @@ internal sealed class BitmapFont
 	/// <summary>A font by file name - "TITLEBIG.bf4" - loaded once. Null, and a warning, if it will not load.</summary>
 	public static BitmapFont? Get( string fileName )
 	{
-		if ( Loaded.TryGetValue( fileName, out var font ) )
+		var path = GameLanguage.PathFor( fileName );
+
+		if ( Loaded.TryGetValue( path, out var font ) )
 			return font;
 
 		try
 		{
-			font = new BitmapFont( fileName, FileSystem.ReadAllBytes( $"{Folder}/{fileName}" ) );
+			font = new BitmapFont( fileName, FileSystem.ReadAllBytes( path ) );
 		}
 		catch ( Exception e )
 		{
 			Log.Warning( $"UI: font '{fileName}' would not load - {e.Message}" );
 		}
 
-		Loaded[fileName] = font;
+		Loaded[path] = font;
 		return font;
 	}
 

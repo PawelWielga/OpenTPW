@@ -680,7 +680,7 @@ internal sealed class ParkBuyScreen : UiWindow
 	}
 
 	/// <summary>The kinds' names, the table the boot loads as <c>mObjectTypeNames</c> (table <c>0x3f9</c>, <c>[0x0078bad0]</c>).</summary>
-	internal const string TypeTable = "Language/English/ITEMTYPES.str";
+	internal static string TypeTable => GameLanguage.PathFor( "ITEMTYPES.str" );
 
 	private static StringFile? _typeNames;
 

@@ -30,10 +30,10 @@ namespace OpenTPW.UI;
 internal sealed class ParkVisitorWindow : UiWindow
 {
 	/// <summary>The status words, the table the boot loads as <c>mUIKidStates</c> (table <c>0x3ec</c>, <c>[0x0078baa0]</c>).</summary>
-	internal const string StatusTable = "Language/English/KIDSTATES.str";
+	internal static string StatusTable => GameLanguage.PathFor( "KIDSTATES.str" );
 
 	/// <summary>The thoughts' words, <c>[0x0078ba9c]</c>.</summary>
-	internal const string ThoughtTable = "Language/English/THOUGHTS.str";
+	internal static string ThoughtTable => GameLanguage.PathFor( "THOUGHTS.str" );
 
 	/// <summary>The status row that names what the guest is using, "Using: {P0}" (<c>0x004b73ea</c>).</summary>
 	internal const int UsingRow = 16;

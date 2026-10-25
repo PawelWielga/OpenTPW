@@ -1,4 +1,4 @@
-﻿using System.Text;
+using System.Text;
 
 namespace OpenTPW;
 
@@ -9,8 +9,8 @@ public static class Localization
 
 	static Localization()
 	{
-		UIStrings = new StringFile( "Language/English/UITEXT.str" );
-		HelpTexts = new StringFile( "Language/English/UIHELPTEXT.str" );
+		UIStrings = new StringFile( GameLanguage.PathFor( "UITEXT.str" ) );
+		HelpTexts = new StringFile( GameLanguage.PathFor( "UIHELPTEXT.str" ) );
 	}
 
 	/// <summary>A line of the interface's text.</summary>

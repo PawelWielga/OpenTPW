@@ -18,6 +18,10 @@ OpenTPW re-implements the engine of Theme Park World (1999) so it runs on modern
 
 **You need your own copy of the original game.** This repository ships no game content.
 
+## Polish edition in this fork
+
+Use `--language pl` with your own Polish game files. This fork fixes the Polish BFMU escape encoding and selects Polish UI/help, fonts and names. See [Polish support and validation](docs/POLISH-SUPPORT.md) and [browser-port assessment](docs/WEB-PORT.md). This does not make the unfinished engine fully playable.
+
 ## Can I play it yet?
 
 **Not yet.** OpenTPW is a work in progress. What works today:

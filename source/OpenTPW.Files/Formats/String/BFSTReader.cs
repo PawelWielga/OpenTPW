@@ -1,4 +1,4 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 using System.Text;
 
 namespace OpenTPW;
@@ -70,7 +70,7 @@ internal sealed class BFSTReader : BaseFormat
 		var fileLength = (int)tempStreamReader.BaseStream.Length;
 
 		buffer = new byte[fileLength];
-		tempStreamReader.BaseStream.Read( buffer, 0, fileLength );
+		tempStreamReader.BaseStream.ReadExactly( buffer );
 		tempStreamReader.Close();
 
 		memoryStream = new ExpandedMemoryStream( buffer );
@@ -122,16 +122,7 @@ internal sealed class BFSTReader : BaseFormat
 			var stringLength = memoryStream.ReadByte() | (memoryStream.ReadByte() << 8) | (memoryStream.ReadByte() << 16);
 			longest = Math.Max( longest, stringLength );
 
-			StringBuilder str = new StringBuilder();
-			// Characters
-			for ( int j = 0; j < stringLength; j++ )
-			{
-				var mtuPos = memoryStream.ReadByte();
-				var readCharacter = LookupTable.GetCharacter( mtuPos );
-				str.Append( readCharacter );
-			}
-
-			outputList.Add( str.ToString() );
+			outputList.Add( stringLength == 0 ? string.Empty : LookupTable.Decode( memoryStream.ReadBytes( stringLength ) ) );
 
 			// Go back to intial position
 			memoryStream.Seek( initialMemPos, SeekOrigin.Begin );
@@ -168,12 +159,7 @@ internal sealed class BFSTReader : BaseFormat
 
 				if ( type == 1 && at + value <= buffer.Length )
 				{
-					var text = new StringBuilder( value );
-
-					for ( var index = 0; index < value; ++index )
-						text.Append( LookupTable.GetCharacter( buffer[at + index] ) );
-
-					parts.Add( new StringPart( text.ToString(), 0 ) );
+					parts.Add( new StringPart( value == 0 ? string.Empty : LookupTable.Decode( buffer.AsSpan( at, value ) ), 0 ) );
 					at += (value + 3) & ~3;
 				}
 				else if ( type == 2 )

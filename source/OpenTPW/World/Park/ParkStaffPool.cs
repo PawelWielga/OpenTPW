@@ -299,7 +299,7 @@ public sealed class ParkStaffPool
 	{
 		try
 		{
-			_kindNames ??= new StringFile( "Language/English/STAFF_TYPES.str" );
+			_kindNames ??= new StringFile( GameLanguage.PathFor( "STAFF_TYPES.str" ) );
 			var row = (kind * 2) + (plural ? 1 : 0);
 
 			return _kindNames[row] ?? $"kind {kind}";
@@ -667,7 +667,7 @@ public sealed class ParkStaffPool
 	{
 		try
 		{
-			_nameTables[kind] ??= new StringFile( $"Language/English/{NameTables[kind]}.str" );
+			_nameTables[kind] ??= new StringFile( GameLanguage.PathFor( $"{NameTables[kind]}.str" ) );
 
 			return _nameTables[kind]![row] ?? $"{NameOfKind( kind )} {_nextId}";
 		}

@@ -10,7 +10,7 @@ namespace OpenTPW;
 public static class ParkObjectNames
 {
 	/// <summary>The table the game's running language keeps the names in.</summary>
-	public const string TablePath = "Language/English/OBJECT_NAMES.str";
+	public static string TablePath => GameLanguage.PathFor( "OBJECT_NAMES.str" );
 
 	/// <summary>The executable's rows: an item's id, then the row of each line.</summary>
 	private static readonly (int Item, int RowA, int RowB)[] Rows =

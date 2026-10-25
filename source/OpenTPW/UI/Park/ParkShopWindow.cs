@@ -28,7 +28,7 @@ namespace OpenTPW.UI;
 internal sealed class ParkShopWindow : UiWindow
 {
 	/// <summary>The special ingredients' words, the boot's table <c>INGREDIENT</c> (<c>[0x0078ba8c]</c>).</summary>
-	internal const string IngredientTable = "Language/English/INGREDIENT.str";
+	internal static string IngredientTable => GameLanguage.PathFor( "INGREDIENT.str" );
 
 	/// <summary>How often the figures are filled again, in milliseconds of real time: timer <c>0x80080</c>, armed with 4000 on message <c>0x15</c>.</summary>
 	private const long RefreshEvery = 4000;

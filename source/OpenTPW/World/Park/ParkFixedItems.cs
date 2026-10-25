@@ -564,7 +564,7 @@ public sealed class ParkFixedItems : Entity
 
 		try
 		{
-			var names = new StringFile( "Language/English/THEMENAMES.str" );
+			var names = new StringFile( GameLanguage.PathFor( "THEMENAMES.str" ) );
 
 			return index < names.Entries.Length ? names[index] : string.Empty;
 		}
