@@ -63,6 +63,16 @@ public sealed class ParkCamcorderCameraMode : CameraMode
 	public static float Pitch { get; set; }
 
 	/// <summary>
+	/// The orbit camera's point of interest and yaw as first person was entered, put back on leaving: the original saves
+	/// them to <c>0x00790ad0</c> and <c>0x00790a9c</c> (<c>0x0042af48</c>..<c>0x0042af6a</c>) and puts them back
+	/// (<c>0x0042af8c</c>..<c>0x0042afb4</c>; <c>docs/exe/park-engine.md</c>, "Entering and leaving first person").
+	/// </summary>
+	public static Vector3 SavedPointOfInterest { get; private set; }
+
+	/// <inheritdoc cref="SavedPointOfInterest"/>
+	public static float SavedYaw { get; private set; }
+
+	/// <summary>
 	/// Whether the park is being looked at from the ground right now. Kept here rather than asked of
 	/// <see cref="Camera"/> so that nothing outside has to know how a camera mode is stored.
 	/// </summary>
@@ -192,10 +202,14 @@ public sealed class ParkCamcorderCameraMode : CameraMode
 		if ( ParkHand.LetGo() is { } letGo )
 			Log.Info( $"Hand: {letGo}" );
 
+		SavedPointOfInterest = ParkOrbitCameraMode.PointOfInterest;
+		SavedYaw = ParkOrbitCameraMode.Yaw;
+
 		Stand = ParkOrbitCameraMode.PointOfInterest;
 		Yaw = ParkOrbitCameraMode.Yaw;
 		Pitch = 0f;
 		Active = true;
+		Log.Info( $"First person: entered at ({Stand.X:F3}, {Stand.Y:F3}) yaw {Yaw:F4}, the orbit's saved" );
 
 		Camera.SetCameraMode<ParkCamcorderCameraMode>();
 		ParkGuestSprites.Current?.UseFirstPersonPictures( true );
@@ -206,13 +220,20 @@ public sealed class ParkCamcorderCameraMode : CameraMode
 	}
 
 	/// <summary>
-	/// Puts the orbit camera back, looking at wherever the viewer had walked to. <b>A deviation:</b> the
-	/// original puts back the point of interest and yaw it saved on entry (docs/QUEUE.md Q25).
+	/// Puts the orbit camera back where it was as first person was entered, its point of interest and its yaw, as the
+	/// original does (<c>0x0042af8c</c>..<c>0x0042afb4</c>): the walk and the turns made on the ground are thrown away.
 	/// </summary>
+	/// <remarks>
+	/// <b>A deviation:</b> the original puts back the rotation it asks for (<c>0x00790a38</c>) and leaves the drawn one
+	/// (<c>0x007909e0</c>) at the walk's heading, so the view eases round to the saved one by min(dt, 140) / 140 a frame;
+	/// ours has one rotation and no ease (<c>docs/exe/park-engine.md</c>, "The turn"), so it is put back at once.
+	/// </remarks>
 	public static void Leave()
 	{
-		ParkOrbitCameraMode.PointOfInterest = new Vector3( Stand.X, Stand.Y, 0f );
-		ParkOrbitCameraMode.Yaw = Yaw;
+		ParkOrbitCameraMode.PointOfInterest = SavedPointOfInterest;
+		ParkOrbitCameraMode.Yaw = SavedYaw;
+		Log.Info( $"First person: left at ({Stand.X:F3}, {Stand.Y:F3}) yaw {Yaw:F4}; the orbit put back at "
+			+ $"({SavedPointOfInterest.X:F3}, {SavedPointOfInterest.Y:F3}) yaw {SavedYaw:F4}" );
 		Active = false;
 		ParkGuestSprites.Current?.UseFirstPersonPictures( false );
 
@@ -239,6 +260,8 @@ public sealed class ParkCamcorderCameraMode : CameraMode
 		Active = false;
 		Stand = Vector3.Zero;
 		Yaw = 0f;
+		SavedPointOfInterest = Vector3.Zero;
+		SavedYaw = 0f;
 		Pitch = 0f;
 		RightHeld = false;
 

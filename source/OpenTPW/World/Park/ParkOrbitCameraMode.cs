@@ -220,8 +220,7 @@ public sealed class ParkOrbitCameraMode : CameraMode
 			var scroll = ScrollSpeed * Time.Delta;
 
 			// The same basis the eye is placed from, and the same one ParkCamcorderCameraMode walks
-			// along, so forward scrolls the view forward at every yaw - including the one camcorder mode
-			// hands back, which need not be a multiple of pi/4.
+			// along, so forward scrolls the view forward at every yaw, not only at multiples of pi/4.
 			PointOfInterest += new Vector3(
 				((forward * -MathF.Sin( Yaw )) + (right * MathF.Cos( Yaw ))) * scroll,
 				((forward * MathF.Cos( Yaw )) + (right * MathF.Sin( Yaw ))) * scroll,

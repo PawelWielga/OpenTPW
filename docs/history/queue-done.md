@@ -9964,6 +9964,20 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   -11.989, -12.806, 973.517, 863.621, 862.013 (rotation 90); ours ran from 920 to 1727 with D held 4 s
   (`park-engine.md`, "The point of interest's edge"; `q625/PREDICTION.txt`, 8 held, 3 missed;
   `q625/side-by-side.png`). The build is Q667.
+- [x] **Q626. Leaving the camcorder leaves the camera at an angle that is no multiple of 45 degrees.** From Alexah's
+  play test, 2026-10-21 (note 34, shot2). The original keeps a saved point of interest and a saved rotation and puts
+  them back on leaving (`park-engine.md:379`; Q48 decoded the leave, QUEUE:1924-1926); ours hands back the walk's yaw,
+  "need not be a multiple of pi/4" (`ParkOrbitCameraMode.cs:221-222`). Put the saved point and rotation back, as the
+  original does (split from Q25). Confirm: enter and leave the camcorder after turning in it; the orbit's point and yaw
+  equal the saved ones in a log line, a screenshot beside the original's.
+  **Done (2026-10-25):** `ParkCamcorderCameraMode.Enter` saves the orbit's point and yaw and `Leave` puts them back
+  (`0x0042af48`..`0x0042af6a`, `0x0042af8c`..`0x0042afb4`), logged as `First person: entered` and `left ... the orbit
+  put back at`. Measured in the original by `original/campoi.py` (extended with the drawn rotation and the saved copy):
+  saved (450, 165, 180) on entry, turned to 278.14, C put back 180.00 and (450, 165) at once; only the asked rotation
+  is put back, so its drawn one eases from the walk's heading to 180.00 over 1.36 s (`park-engine.md`, "Entering and
+  leaving first person"). Ours puts the yaw back at once: no ease (a deviation, said at the site; noted under Q23).
+  Ours walked 40 and turned to -5.7597 and came back to (481.897, 166.285) and -3.1416 (`q626/PREDICTION.txt`, 12 held,
+  1 missed; `q626/side-by-side.png`). Tests `ParkCamcorderLeaveTests`, 3; mutate.py 8 of 8.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

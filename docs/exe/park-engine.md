@@ -1675,7 +1675,12 @@ whose `+0x4ac` is nought gets `FUN_004e15b0( 0 )` instead.
   `0x00790a38` to `0x00790a9c`; and the viewer is **stood at the pick point**, height 0
   (`0x0042af37`..`0x0042af80`). The yaw stays as the orbit had it.
 - **Leaving** puts the saved point of interest and yaw back (`0x0042af8c`..`0x0042afb4`). **The walk is thrown
-  away**: the orbit camera returns to where it was before first person.
+  away**: the orbit camera returns to where it was before first person. Only the rotation asked for is put back: in
+  first person the update writes the walk's heading to the asked `0x00790a38` and the drawn `0x007909e0` alike
+  (`0x0042bad3`, `0x0042bae9`), so the drawn one is left at the walk's and eases round to the saved one by the orbit's
+  rule ("The turn"). **Measured** (Q626, `original/campoi.py`, `q626/orig/b-poll.log`): entered from (450, 165) at 180,
+  the copy read 450, 165, 180 and the viewer stood at the pick, (481.897, 166.285); turned to 278.14, asked and drawn
+  alike; C put back 180.00 and (450, 165) by the next poll, the drawn rotation then 240.24 and at 180.00 1.36 s later.
 - **The sprites swap.** Entering ends by calling `FUN_00542420` (`0x0042af85`), leaving by calling `FUN_00542640`
   (`0x0042afba`). `FUN_00542420` runs only while `DAT_00763f80` is 1, sets it to 0, and reloads every loaded bank
   whose `+0x205` (the `.ESP` byte `0x10C`) is set from its `.fpc` (the static at `0x00875fe8`, built from
@@ -1725,8 +1730,9 @@ leaves X at 54.9020 instead of 54.9010.
 original needs a click on a cell of type 0, 1, 3, 9 or 30 inside the heightfield. `Step` clamps to 1..1280, which
 is ours: the original's bound is the soft one at 960 by 850. Entered at (1300, 245), the viewer is clamped to 1280,
 cell 128, and held there. Entered at (1100, 245) - type 7, solid, which in Lost Kingdom is every one of the 8,224
-cells beyond the 96 by 85 park - it cannot move at all. `Leave` hands the orbit camera the walked position and yaw,
-where the original restores its own.
+cells beyond the 96 by 85 park - it cannot move at all. `Leave` puts back the point and yaw `Enter` saved (Q626), at
+once: ours keeps one rotation and eases none (Q23), so the original's turn back from the walk's heading, over about a
+second, is not drawn.
 
 ---
 

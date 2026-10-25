@@ -5,6 +5,11 @@ newest first. The pre-commit hook (`tools/status-sweep.py`) moves an item's acco
 written above it. **Grep it by Q-number; never read it whole.** Each account is frozen at its item's date: a
 later item may have run what an earlier one lists as untested.
 
+- Q625 (the orbit camera's edge, decode only): measured in the original off-screen on Lost Kingdom's stock park,
+  Instant Action, zoom 110, at rotations 0 and 90, about 30 to 60 ms a frame by the overshoot; ours on the desktop at 1280 x 720. Not
+  looked at: the other themes' heightfields (960 by 850 by the docs, not read live there), the pointer's push past 0.95
+  driven (its rule read only), a zoom other than 110, the arrows' zoom and turn driven by key (read from the table, Q631),
+  and what the original draws past the edge (flat grass, not read).
 - Q624 (the park map's view, zoom and scroll): seen in Lost Kingdom's stock park, Instant Action, on a 1280 x 720
   window, beside the original's at 800 x 600 off-screen (`q624/orig`). Not looked at: the other themes' pictures (the
   same rule, their fields measured the same), Full Simulation, a 4:3 or a taller window, Right button scroll's drag (its

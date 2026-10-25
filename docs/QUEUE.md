@@ -74,12 +74,6 @@ The review of the run of 2026-10-16/17 put Q444 to Q446 first (done; its finding
 The review of the run of 2026-10-17/18 (its findings are `~/.cache/tpw-harnesses/handoff/review3/`, `VERIFY-<n>.md`)
 filed the items that cite it.
 
-- [ ] **Q626. Leaving the camcorder leaves the camera at an angle that is no multiple of 45 degrees.** From Alexah's
-  play test, 2026-10-21 (note 34, shot2). The original keeps a saved point of interest and a saved rotation and puts
-  them back on leaving (`park-engine.md:379`; Q48 decoded the leave, QUEUE:1924-1926); ours hands back the walk's yaw,
-  "need not be a multiple of pi/4" (`ParkOrbitCameraMode.cs:221-222`). Put the saved point and rotation back, as the
-  original does (split from Q25). Confirm: enter and leave the camcorder after turning in it; the orbit's point and yaw
-  equal the saved ones in a log line, a screenshot beside the original's.
 - [ ] **Q627. Guests are picked up and dropped off by the vehicles almost non-stop. Measure first.** From Alexah's play
   test, 2026-10-21 (note 38). The arrival pace is decoded and built: the first load 126 s in, the next about 150 s after
   the last guest got off (`docs/PLAYER-GAPS.md:236-253`, Q68b); the leavers' pick-up rate is not measured (map). The
@@ -2188,6 +2182,9 @@ The decode session writes the finding to `docs/exe/` and stops. The build is the
   `[0x0078d912]` set: this item's own option); the
   direction is already the original's (this game's yaw is its rotation negated, and the Left arrow,
   RotateLeft, lowers the yaw). The step and the easing are what differ.
+  From Q626 (`park-engine.md`, "Entering and leaving first person"): leaving first person puts back the asked rotation
+  and leaves the drawn one at the walk's heading, so the view eases round to the saved one, 1.36 s from 98 degrees off
+  (`q626/orig/b-poll.log`); `ParkCamcorderCameraMode.Leave` puts the yaw back at once. The ease built here carries it.
   From the run review (2026-10-17, Q440): W and D scroll the orbit camera (`ParkOrbitCameraMode.cs`) without ending a
   locator's follow, where any pan in the original does (`0x0042ba37`, `0x0042ba92`; `ParkLocator.Following` is cleared only
   at its own fold, a mode change, a person gone and a step that finds nobody), so scrolling with the locator following
@@ -2214,8 +2211,8 @@ The decode session writes the finding to `docs/exe/` and stops. The build is the
   `ParkGadget.EnterCamcorder` enters the mode at once. The original installs a mouse-interaction mode
   (`FUN_00481a10`, `park-engine.md`, "Camcorder mode — the first-person view"). Its click handler was decoded by Q48
   (`park-engine.md`, "Entering and leaving first person"): cursor `0x13`, a left click on a cell of type 0, 1, 3, 9 or
-  30 stands the viewer at the picked point, and leaving puts the saved point of interest and yaw back, where ours keeps
-  the walk. It is also Q48's hole (3). Left to decode: the click's own cell tests and its thing branch. Then build.
+  30 stands the viewer at the picked point, and leaving puts the saved point of interest and yaw back (built by
+  Q626). It is also Q48's hole (3). Left to decode: the click's own cell tests and its thing branch. Then build.
   From Q121: measured in the original, one forward term (the Up arrow, or a held right button) walks about 21.8 units a
   second at zoom word 110, both together twice that; `WalkSpeed` is a chosen 40. The velocity is not decoded to a speed
   (`hud.md`, "Four ways out of camcorder mode"): decode it with this, then set the speed. The original's walk keys

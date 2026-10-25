@@ -27,21 +27,22 @@ One line per system; the detail, item by item, is `docs/WORKS.md` (grep it by ar
 - The handyman's litter search is counted and answers nothing; a mechanic put down goes idle where the original's searches at once (counted); the guard's shout and catch (`0x88`, `0x89`) wait on the chase, unbuilt and uncounted; a member going idle keeps the picture they had, but from a performance or a clean; one put down sets off on the next sweep, where the original's stands eleven (Q229). No freed thing id is used again (Q582). Guests, staff and rides are swept apart, not as one list (Q150). The pause overlay as the window loses the focus is counted, not built. A strike's three posts to the advisor and the handymen's own cause are counted, and the ride window's strike statuses unbuilt (Q212).
 - Counted, not built: the isles' random clips (Q76), the idle repeat (Q77), a clip's hide list at a start on an idle channel (Q658), a ride walked into in first person, a coaster's excitement and level, the Hot Pot's wake, a ride head's picture turn (`RIDER_HEAD_TURN_AT_REST`).
 - The orbit camera's point goes on past the land's edge over the sea, where the original's stops about a cell past the heightfield's edge (decoded, Q625; the build is Q667).
-- The camcorder is entered where the orbit looks, not by a click on the ground, so it can start off the park, where it cannot move, and leaving keeps the walk where the original's throws it away (Q25). It walks at a chosen 40 units a second, where the original's measures about 21.8 (Q25). Walking into the Belly Bounce's entrance starts no ride view: counted, and the viewer walks on into its queue; three of the four ride views (a track ride's car, a TOUR car, a coaster's node) are counted and taken as none (Q246).
+- The camcorder is entered where the orbit looks, not by a click on the ground, so it can start off the park, where it cannot move (Q25); leaving puts the orbit's point and yaw back at once, where the original's drawn turn eases back over about a second (Q626, Q23). It walks at a chosen 40 units a second, where the original's measures about 21.8 (Q25). Walking into the Belly Bounce's entrance starts no ride view: counted, and the viewer walks on into its queue; three of the four ride views (a track ride's car, a TOUR car, a coaster's node) are counted and taken as none (Q246).
 
 ## Next
 
-`docs/QUEUE.md`, from the top; every ticked item is in `docs/history/queue-done.md`. Next Q626 (leaving the camcorder): Alexah's play test of 2026-10-21 put Q616 to Q645 first, the display, then what a player hits, then the chosen improvements (`playtest-2026-10-21/notes.md`); Q598 (every clip's scale track posed) follows them in section A (Q609, the advisor's row 19 that Q602 decoded, and Q587 to Q589, the karts' and the water ride's build, are filed after it; Q586 stood above the ordered block; Q608, the draws left both-sided, is filed after Q713): the queue was reordered at Alexah's word, 2026-10-20. Q92 evidence and status limitations are in `docs/exe/ride-window-door.md`. Q91b hoarding implementation and evidence are in `docs/exe/ride-hoardings.md`. Q85b's implementation and evidence are in `docs/exe/guest-arrivals.md`. Gaps 4 and 7: `docs/PLAYER-GAPS.md`. Q13 is done: `docs/history/CLEANUP-PLAN.md`.
+`docs/QUEUE.md`, from the top; every ticked item is in `docs/history/queue-done.md`. Next Q627 (the vehicles' pick-ups, measure first; Q25, ordered after Q626, stands lower in the file): Alexah's play test of 2026-10-21 put Q616 to Q645 first, the display, then what a player hits, then the chosen improvements (`playtest-2026-10-21/notes.md`); Q598 (every clip's scale track posed) follows them in section A (Q609, the advisor's row 19 that Q602 decoded, and Q587 to Q589, the karts' and the water ride's build, are filed after it; Q586 stood above the ordered block; Q608, the draws left both-sided, is filed after Q713): the queue was reordered at Alexah's word, 2026-10-20. Q92 evidence and status limitations are in `docs/exe/ride-window-door.md`. Q91b hoarding implementation and evidence are in `docs/exe/ride-hoardings.md`. Q85b's implementation and evidence are in `docs/exe/guest-arrivals.md`. Gaps 4 and 7: `docs/PLAYER-GAPS.md`. Q13 is done: `docs/history/CLEANUP-PLAN.md`.
 
 ## Not verified on screen
 
 Only the item just landed is here. Every earlier item's account is in `docs/history/not-verified.md`, newest first, moved there by the pre-commit hook: grep it by Q-number.
 
-- Q625 (the orbit camera's edge, decode only): measured in the original off-screen on Lost Kingdom's stock park,
-  Instant Action, zoom 110, at rotations 0 and 90, about 30 to 60 ms a frame by the overshoot; ours on the desktop at 1280 x 720. Not
-  looked at: the other themes' heightfields (960 by 850 by the docs, not read live there), the pointer's push past 0.95
-  driven (its rule read only), a zoom other than 110, the arrows' zoom and turn driven by key (read from the table, Q631),
-  and what the original draws past the edge (flat grass, not read).
+- Q626 (leaving the camcorder puts the orbit's point and yaw back): the original measured off-screen on Lost Kingdom's
+  stock park, Instant Action, entered by the gadget's pick at (450, 165), zoom 110, rotation 180, turned by the pointer
+  and left by C; ours on the desktop at 1280 x 720, entered and left by C. Not looked at: leaving by Escape, the eject
+  button or a right click in either game (ours runs the same `Leave`), a walk in the original before leaving (only its
+  turn), the original's drawn turn back as frames (read from memory only; not built here, Q23), Full Simulation (the
+  same code path, not run), and the other themes.
 
 
 ## Numbers (take counts fresh; these go stale within a day)
@@ -49,8 +50,8 @@ Only the item just landed is here. Every earlier item's account is in `docs/hist
 | | | measured |
 |---|---|---|
 | Opcodes | **78** of 106 | 2026-10-20, Q553 (`FADEOBJ`), `case Opcode.` labels vs enum members |
-| Tests | **3900**, 0 fail, 0 skip with the game | 2026-10-25, Q624, alone in a worktree |
-| Tests without the game | **1385** ran, **2515** skipped, of 3900 | 2026-10-25, Q624, alone in a worktree |
+| Tests | **3903**, 0 fail, 0 skip with the game | 2026-10-25, Q626, alone in a worktree |
+| Tests without the game | **1388** ran, **2515** skipped, of 3903 | 2026-10-25, Q626, alone in a worktree |
 | Build warnings | 121 in the main tree; 131 in a fresh worktree, the ten more NuGet's advisories on ModKit's ImageSharp | 2026-10-10 (the worktree's 131 and the main tree's 121 at Q340, the worktree's 131 and the main tree's 121 again at Q343, at Q344 and at Q345, and the worktree's 131 at Q346 and, with the main tree's 121, at Q347, at Q348, at Q349, at Q351 and at Q352, 2026-10-13) |
 | Park load | **2.5 s**, worst phase `terrain` 0.72 s | 2026-09-21, three jungle runs |
 
