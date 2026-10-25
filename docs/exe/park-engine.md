@@ -335,7 +335,7 @@ Separate from the lobby island camera. Save module `"SAD_CAMERA"`, chunk magic `
 | `FUN_0042cec0` | — | Loads the camera save block; also persists `gui_CameraFlags` and zeroes the flags immediately after loading them | Decompiled |
 | `FUN_0042cdc0` | — | Saves the camera save block | Decompiled |
 | `DAT_00790ab0` | `gui_CameraFlags` | Camera flags word, saved under that name | `FUN_0042cec0` |
-| `FUN_0042b1c0` | — | The camera-mode dispatcher, `gui_CameraFlags`' heaviest consumer | Decompiled |
+| `FUN_0042b1c0` | — | The camera-mode dispatcher and update, `gui_CameraFlags`' heaviest consumer (Ghidra `ParkCamera_Update`; its point's edge below, Q625) | Decompiled |
 | `0x00748158` | — | The 25-entry `camera` binding table (unnamed) | `FUN_0040cb80` |
 
     POI default (475, 0, 175)          zoom 110, clamped [70, 130] (a hidden bit widens it to [40, 300], below)
@@ -392,6 +392,35 @@ it by min(dt, 140) / 140 a frame, or min(dt, 200) / 200 with `[0x0078d912]` set 
 action 6) and keypad 9 raise the rotation (`[0x00790aac]` bit 8, `0x0042b355`), 0.002 a millisecond held, or a
 quarter turn a press with `[0x0078d912]` set; the Right arrow and keypad 7 lower it. The three scroll terms
 `0x00790a88`..`0x00790a90` carry a pan's momentum; the game's own snap (`FUN_0042aab0`) noughts them.
+
+**The point of interest's edge** (Q625, decoded and measured). Nothing clamps the orbit's point `0x007908f0`/`0x007908f8`
+either: the soft bound on the walker ("Nothing clamps the position", under "Walking on the ground") is the same block,
+`0x0042bc2a`..`0x0042bd65`, run after both the orbit's and the free-look's input, so it holds the orbit too.
+- **The pan's input.** The keypad's 8, 2, 4 and 6 (camera rows `0xd`, `0xe`, `0xf`, `0x10` of `0x00748158`, keys `0x68`,
+  `0x62`, `0x64`, `0x66`) set the forward and across inputs to +1, -1, -1, +1; otherwise each is the pointer's place,
+  -1 to 1 across the frame (`0x00790ac8`, `0x00790acc`), when the push scroll applies (the follow's list above). Each
+  counts only past 0.95: `(input - 0.95) x 10` (`0x006fddc0`/`0x006fddc4`, `0x006fdd7c`), so a key is 0.5. The arrows do
+  not pan: Up and keypad 1 (rows 0, `0x15`) take the zoom in by 0.05 a millisecond (`0x006fddbc`), Down and keypad 3
+  (rows 1, `0x16`) out, Left and keypad 9, Right and keypad 7 turn (`0x0042b32d`..`0x0042b3d5`).
+- **The speed.** The inputs are turned by the drawn rotation, `vx = x cos r + f sin r`, `vz = f cos r - x sin r`
+  (`0x0042bbe6`..`0x0042bc28`), and each scroll term becomes `(sqrt( zoom ) x 0.02 x input + term) x 0.5` a frame
+  (`0x006fddf8`, `0x006fddfc`): a held key settles at `sqrt( zoom ) x 0.01` units a millisecond, 104.9 a second at zoom
+  110, 83.7 at 70, 114.0 at 130. With no input each term is divided by `1 + 0.01 dt` a frame (`0x006fddc8` = -0.01) and
+  noughted under 0.0001 (`0x0074c988`). The orbit's point moves `dt x term` (`0x0042c5ed`..`0x0042c61b`); `dt` is the frame's milliseconds,
+  100 past 200 and 1 at or below nought (`0x0042b2c3`).
+- **The edge.** Before the move (`0x0042b668`..`0x0042b716`) the point is flagged past x < 0 (1), z < 0 (4),
+  x > `+0x18 x +0x10` (2) and z > `+0x1c x +0x14` (8) of the heightfield `[[0x007a0854] + 0x6c]`: 960 and 850 in Lost
+  Kingdom, not the 128-cell map. Where flagged and the new term points further out, the term becomes the frame's old one
+  divided by `1 + 0.01 dt` (`0x0042bca0`..`0x0042bd5f`): the push is dropped and the coast decays. Nothing pulls the point
+  back, and a pan inward is free. So a held pan stops `100 x |term|` past the edge plus up to one frame's step: 10.5 to
+  14 units at zoom 110 and 30 frames a second, in the second cell out (x 97 or -2, z 86 or -2; at zoom 70, 8.4 to 11).
+- **Measured** (Q625, `original/campoi.py` on the stock park, zoom 110, `q625/orig/a-*.log`, `b-*.log`): keypad 4 from
+  x 40 stopped at -11.989; keypad 2 from z 40 at -12.806; keypad 6 from x 920 at 973.517 (and at 970.643 and 973.435 with its release lost); keypad 8
+  from z 810 at 863.621; keypad 4 at rotation 90 from z 810 left by z, at 862.013. The held term read 0.10488 a
+  millisecond. Released past the edge, the point stayed there. Started past the edge (x 1240), keypad 6 moved nothing.
+  Past the edge the original draws flat grass (`q625/orig/b-right-2-after.png`); what that ground is was not read.
+- **OpenTPW** adds W and D's scroll with no bound (`ParkOrbitCameraMode.cs:225-227`, 200 units a second): from x 920, D
+  held 4 s ran to x 1727, over the sea (`q625/side-by-side.png`, `q625/ours-run1/confirm.txt`). The build is Q667.
 
 The camera persists a *saved* POI and *saved* Y rotation as well as the *required* ones — the shape of a camera that leaves its position and is put back (camcorder mode does exactly that).
 

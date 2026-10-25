@@ -26,21 +26,22 @@ One line per system; the detail, item by item, is `docs/WORKS.md` (grep it by ar
 - Every other sound still waits out a per-effect "repeat delay" that is really a priority (Q43). Of a park file's live voices only its held chains are put back (Q612), so the stock park's gates make their chain of beasts from the entry as the original's do; its one-shots, plain and music-class voices (the Fountain's, the Litter Bin's, the crowd's, the music's), its screams' chains and the land's own copies are counted (`PARK_FILE_SOUND_VOICE_*`, Q741), and a save writes the loaded file's list less the voices let go (`ParkVoices.Without`). A voice is not clamped to 16 bits as the original's is, only the mix (`docs/exe/audio.md`).
 - The handyman's litter search is counted and answers nothing; a mechanic put down goes idle where the original's searches at once (counted); the guard's shout and catch (`0x88`, `0x89`) wait on the chase, unbuilt and uncounted; a member going idle keeps the picture they had, but from a performance or a clean; one put down sets off on the next sweep, where the original's stands eleven (Q229). No freed thing id is used again (Q582). Guests, staff and rides are swept apart, not as one list (Q150). The pause overlay as the window loses the focus is counted, not built. A strike's three posts to the advisor and the handymen's own cause are counted, and the ride window's strike statuses unbuilt (Q212).
 - Counted, not built: the isles' random clips (Q76), the idle repeat (Q77), a clip's hide list at a start on an idle channel (Q658), a ride walked into in first person, a coaster's excitement and level, the Hot Pot's wake, a ride head's picture turn (`RIDER_HEAD_TURN_AT_REST`).
+- The orbit camera's point goes on past the land's edge over the sea, where the original's stops about a cell past the heightfield's edge (decoded, Q625; the build is Q667).
 - The camcorder is entered where the orbit looks, not by a click on the ground, so it can start off the park, where it cannot move, and leaving keeps the walk where the original's throws it away (Q25). It walks at a chosen 40 units a second, where the original's measures about 21.8 (Q25). Walking into the Belly Bounce's entrance starts no ride view: counted, and the viewer walks on into its queue; three of the four ride views (a track ride's car, a TOUR car, a coaster's node) are counted and taken as none (Q246).
 
 ## Next
 
-`docs/QUEUE.md`, from the top; every ticked item is in `docs/history/queue-done.md`. Next Q625 (the camera leaving the park): Alexah's play test of 2026-10-21 put Q616 to Q645 first, the display, then what a player hits, then the chosen improvements (`playtest-2026-10-21/notes.md`); Q598 (every clip's scale track posed) follows them in section A (Q609, the advisor's row 19 that Q602 decoded, and Q587 to Q589, the karts' and the water ride's build, are filed after it; Q586 stood above the ordered block; Q608, the draws left both-sided, is filed after Q713): the queue was reordered at Alexah's word, 2026-10-20. Q92 evidence and status limitations are in `docs/exe/ride-window-door.md`. Q91b hoarding implementation and evidence are in `docs/exe/ride-hoardings.md`. Q85b's implementation and evidence are in `docs/exe/guest-arrivals.md`. Gaps 4 and 7: `docs/PLAYER-GAPS.md`. Q13 is done: `docs/history/CLEANUP-PLAN.md`.
+`docs/QUEUE.md`, from the top; every ticked item is in `docs/history/queue-done.md`. Next Q626 (leaving the camcorder): Alexah's play test of 2026-10-21 put Q616 to Q645 first, the display, then what a player hits, then the chosen improvements (`playtest-2026-10-21/notes.md`); Q598 (every clip's scale track posed) follows them in section A (Q609, the advisor's row 19 that Q602 decoded, and Q587 to Q589, the karts' and the water ride's build, are filed after it; Q586 stood above the ordered block; Q608, the draws left both-sided, is filed after Q713): the queue was reordered at Alexah's word, 2026-10-20. Q92 evidence and status limitations are in `docs/exe/ride-window-door.md`. Q91b hoarding implementation and evidence are in `docs/exe/ride-hoardings.md`. Q85b's implementation and evidence are in `docs/exe/guest-arrivals.md`. Gaps 4 and 7: `docs/PLAYER-GAPS.md`. Q13 is done: `docs/history/CLEANUP-PLAN.md`.
 
 ## Not verified on screen
 
 Only the item just landed is here. Every earlier item's account is in `docs/history/not-verified.md`, newest first, moved there by the pre-commit hook: grep it by Q-number.
 
-- Q624 (the park map's view, zoom and scroll): seen in Lost Kingdom's stock park, Instant Action, on a 1280 x 720
-  window, beside the original's at 800 x 600 off-screen (`q624/orig`). Not looked at: the other themes' pictures (the
-  same rule, their fields measured the same), Full Simulation, a 4:3 or a taller window, Right button scroll's drag (its
-  rule tested, not driven), the arrows' and keys' rate where the original's frame rate is not thirty, and the zoom kept
-  across a park's change (a static in both).
+- Q625 (the orbit camera's edge, decode only): measured in the original off-screen on Lost Kingdom's stock park,
+  Instant Action, zoom 110, at rotations 0 and 90, about 30 to 60 ms a frame by the overshoot; ours on the desktop at 1280 x 720. Not
+  looked at: the other themes' heightfields (960 by 850 by the docs, not read live there), the pointer's push past 0.95
+  driven (its rule read only), a zoom other than 110, the arrows' zoom and turn driven by key (read from the table, Q631),
+  and what the original draws past the edge (flat grass, not read).
 
 
 ## Numbers (take counts fresh; these go stale within a day)

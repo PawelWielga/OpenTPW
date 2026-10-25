@@ -5,6 +5,11 @@ newest first. The pre-commit hook (`tools/status-sweep.py`) moves an item's acco
 written above it. **Grep it by Q-number; never read it whole.** Each account is frozen at its item's date: a
 later item may have run what an earlier one lists as untested.
 
+- Q624 (the park map's view, zoom and scroll): seen in Lost Kingdom's stock park, Instant Action, on a 1280 x 720
+  window, beside the original's at 800 x 600 off-screen (`q624/orig`). Not looked at: the other themes' pictures (the
+  same rule, their fields measured the same), Full Simulation, a 4:3 or a taller window, Right button scroll's drag (its
+  rule tested, not driven), the arrows' and keys' rate where the original's frame rate is not thirty, and the zoom kept
+  across a park's change (a static in both).
 - Q623 (a bought thing drawn as its build begins): seen with the Round Fountain alone, in the stock park, Instant
   Action, put down by the console's `buy` (stepped) and by a real click (the click's frame held by `stall`), and in the
   original from `late30.TPWS` through its buy screen. Not looked at: any other bought thing's first frame (every item

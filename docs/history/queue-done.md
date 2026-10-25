@@ -9949,6 +9949,21 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   (`ParkMapView`, `ParkMapScreen`; `hud.md`, "The map's view"); the original measured in rounds a and b (`mapview.py`).
   Filed: the switches, the pickers and the overlay (Q664, with Q450 (2)), the hover and its click (Q665), the advisor's
   line 0x130 (Q666).
+- [x] **Q625. The park camera can leave the park, to the map's edge and the ocean. Decode first.** From Alexah's play
+  test, 2026-10-21 (note 36, shot4). `ParkOrbitCameraMode` adds to the point of interest with no bound
+  (`ParkOrbitCameraMode.cs:224-226`). The original's pan limit is not documented (only the zoom clamp [70,130],
+  `park-engine.md:349-358`): decode the POI clamp in the camera update (`FUN_0042b1c0` and its pan sites, `0x0042ba37`,
+  `0x0042ba92`) and measure it in the original by holding the pan, then build it. Confirm: the pan held against each
+  edge in both games, the same stopping cell.
+  **Done (2026-10-24), decode only:** the original clamps nothing either; the bound is on the scroll term, the walker's
+  soft bound (`0x0042bc2a`..`0x0042bd65`), run for the orbit too. Before the move the point is flagged past x < 0, z < 0
+  or the heightfield's far edges (`[[0x007a0854] + 0x6c]`, 960 by 850 in Lost Kingdom, not the 128-cell map); flagged, a
+  term pointing further out becomes the old one divided by `1 + 0.01 dt`, so a held pan stops 100 x |term| past the edge
+  plus up to a frame's step and nothing pulls it back. The pan is the keypad's 8, 2, 4 and 6 or the pointer past 0.95,
+  settling at `sqrt( zoom ) x 0.01` units a ms (104.9 a second at zoom 110). Measured by `original/campoi.py`: stops at
+  -11.989, -12.806, 973.517, 863.621, 862.013 (rotation 90); ours ran from 920 to 1727 with D held 4 s
+  (`park-engine.md`, "The point of interest's edge"; `q625/PREDICTION.txt`, 8 held, 3 missed;
+  `q625/side-by-side.png`). The build is Q667.
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

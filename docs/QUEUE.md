@@ -74,12 +74,6 @@ The review of the run of 2026-10-16/17 put Q444 to Q446 first (done; its finding
 The review of the run of 2026-10-17/18 (its findings are `~/.cache/tpw-harnesses/handoff/review3/`, `VERIFY-<n>.md`)
 filed the items that cite it.
 
-- [ ] **Q625. The park camera can leave the park, to the map's edge and the ocean. Decode first.** From Alexah's play
-  test, 2026-10-21 (note 36, shot4). `ParkOrbitCameraMode` adds to the point of interest with no bound
-  (`ParkOrbitCameraMode.cs:224-226`). The original's pan limit is not documented (only the zoom clamp [70,130],
-  `park-engine.md:349-358`): decode the POI clamp in the camera update (`FUN_0042b1c0` and its pan sites, `0x0042ba37`,
-  `0x0042ba92`) and measure it in the original by holding the pan, then build it. Confirm: the pan held against each
-  edge in both games, the same stopping cell.
 - [ ] **Q626. Leaving the camcorder leaves the camera at an angle that is no multiple of 45 degrees.** From Alexah's
   play test, 2026-10-21 (note 34, shot2). The original keeps a saved point of interest and a saved rotation and puts
   them back on leaving (`park-engine.md:379`; Q48 decoded the leave, QUEUE:1924-1926); ours hands back the walk's yaw,
@@ -124,6 +118,9 @@ filed the items that cite it.
   for the all-items and all-staff shortcut rows (`ParkFrontEnd.ShortcutRow`) and say the move at the site and the
   website's key list. A pan ends a locator's follow (`park-engine.md:405-410`). Confirm: each key held in the running
   game, the point moved, a log line.
+  - **Note (Q625):** the camera table read settles the arrows (`park-engine.md`, "The point of interest's edge"): Up
+    and keypad 1 zoom in at 0.05 a millisecond, Down and keypad 3 out, Left and keypad 9, Right and keypad 7 turn; only
+    the keypad's 8, 2, 4 and 6 (and the pointer past 0.95) pan. Read, not yet driven by key in the original.
 - [ ] **Q632. Building a path makes no sound. Decode first.** From Alexah's play test, 2026-10-21 (note 9). No doc,
   queue line or counted gap names a laying sound; only the demolish sound `0x96`-`0x99` by size (`park-engine.md:2599`;
   Q38, QUEUE:1978-1982, counts the demolish side) and the refusal `0xaf` are known. Find in the original's path tool
@@ -288,6 +285,16 @@ filed the items that cite it.
 - [ ] **Q666. The map's advisor line 0x130.** From Q624. The map's opener posts the advisor's line `0x130`
   (`FUN_00486b00`, `0x005f100d`) and its close withdraws it (`FUN_00486b40`); here the map posts nothing (counted `MAP_ADVISOR_LINE`). Read the row
   and its response, build it as the buy screen's own line is, and confirm what he says in both games, the same park.
+- [ ] **Q667. The orbit camera's point stops at the heightfield's edge, as the original's (Q625's build).**
+  `park-engine.md`, "The point of interest's edge": keep a scroll term per axis, eased as the original's
+  (`(sqrt( zoom ) x 0.02 x input + term) x 0.5` a frame, divided by `1 + 0.01 dt` with no input), and where the point
+  stood past an edge at the frame's start (x < 0, y < 0, x > cellsX x cellSizeX, y > cellsY x cellSizeY of
+  `HeightfieldFile`) drop a push further out: the term becomes the old one over `1 + 0.01 dt`. A per-frame recurrence
+  on milliseconds: put it on `Time.Delta` (CLAUDE.md rule 10) and say the deviation at the site. Today W and D scroll at
+  200 units a second with no bound (`ParkOrbitCameraMode.cs:225-227`); the keys and the speed are Q631's, which this
+  should not pre-empt beyond the bound. Past the edge the original draws flat grass (`q625/orig/b-right-2-after.png`) and
+  ours the sea: read what that ground is before building anything there. Confirm: a pan held against each of the four
+  edges in both games (`original/campoi.py`, `q625/orig/run.sh`), the same stopping cell (x 97 or -2, y 86 or -2).
 - [ ] **Q598. Every clip's scale track posed.** From Q597. The scale track (`0x80|0x100`; FileFormats `models.md`,
   "Scale") is in 644 tracks of 192 clips, 128 of them in 54 Lost Kingdom clips of 19 wads (`lib/scalescan.py`):
   the shops `fries`, `steak`, `cost_shp`, the rides `lookout`, `monkey`, `porkpie`, `tourride`, `tvsim`, `volcano`,
