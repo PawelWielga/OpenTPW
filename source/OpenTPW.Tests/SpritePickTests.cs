@@ -33,7 +33,7 @@ public class SpritePickTests
 	}
 
 	private static int Latch( float x, float y, params SpritePick.Drawn[] drawn )
-		=> SpritePick.Latch( drawn, new OpenTPW.Vector2( x, y ), Plain, 0.75f );
+		=> SpritePick.Latch( drawn, new OpenTPW.Vector2( x, y ), Plain, new OpenTPW.Vector2( 1f, 1f ) );
 
 	/// <summary>
 	/// <b>The circle is about the picture's left edge at its origin's height, its radius squared 0.0002 of the span's,
@@ -125,30 +125,66 @@ public class SpritePickTests
 	}
 
 	/// <summary>
-	/// <b>The pointer's latch puts the window's pixel in the box and takes the across at the window's height over its
-	/// width</b> (<see cref="ParkPicking.LatchFor"/>, <c>0x008bcbcc</c>). At 1280 x 720 that is 0.5625: the circle's middle
-	/// moves to 0.3264 and its radius to 0.1497, so 0.146 left of the middle is inside and 0.153 is not, where at 0.75, at
-	/// 1 or at the width over the height both would be inside.
+	/// <b>A window wider than 4:3 takes the original's circle, in the 4:3 frame its lens draws</b> (Q628;
+	/// <see cref="ParkPicking.LatchFor"/>, <see cref="SpritePick.Frame"/>). At 1280 x 720 that frame is 960 across, so the
+	/// window's box reaches 4/3 of it: Mike's circle, radius 0.1618 of the frame, is 0.1214 of the window's box across
+	/// (77.7 pixels) and 0.1618 down (58.3), about the same middle, 0.3264. Taken in the window's own box with the across
+	/// at its height over its width, as before Q628, it was 0.1497 both ways (95.8 pixels across, 53.9 down), so 0.125
+	/// across would be inside and 0.157 down outside.
 	/// </summary>
-	/// <remarks><b>Mutations:</b> the across at 0.75, at 1 or at the width over the height; the box's width and height
-	/// swapped.</remarks>
+	/// <remarks><b>Mutations:</b> the frame not applied to the pointer, to the place, across or down; the across at the
+	/// window's height over its width; the frame held at one.</remarks>
 	[TestMethod]
-	public void ThePointersLatchTakesTheAcrossAtTheWindowsHeightOverItsWidth()
+	public void AWideWindowTakesTheOriginalsCircle()
 	{
 		static int At( float x, float y ) => ParkPicking.LatchFor( [Mike()], new OpenTPW.Vector2( (x + 1f) * 640f, (y + 1f) * 360f ),
 			1280f, 720f, Plain );
 
-		Assert.AreEqual( 26, At( 0.3264f - 0.146f, 0.611f ) );
-		Assert.AreEqual( 0, At( 0.3264f - 0.153f, 0.611f ), "past the radius at 0.5625" );
-		Assert.AreEqual( 26, At( 0.3264f + 0.146f, 0.611f ) );
+		Assert.AreEqual( 26, At( 0.3264f + 0.118f, 0.611f ) );
+		Assert.AreEqual( 0, At( 0.3264f + 0.125f, 0.611f ), "across, past the original's radius" );
+		Assert.AreEqual( 26, At( 0.3264f - 0.118f, 0.611f ) );
+		Assert.AreEqual( 0, At( 0.3264f - 0.125f, 0.611f ) );
+		Assert.AreEqual( 26, At( 0.3264f, 0.611f + 0.157f ), "down, inside the original's radius" );
+		Assert.AreEqual( 0, At( 0.3264f, 0.611f + 0.167f ) );
 	}
 
-	/// <summary>The window's pixel in the -1 to 1 box, down positive.</summary>
+	/// <summary>
+	/// <b>A window narrower than 4:3 takes the original's circle too</b>: its lens holds the 4:3 frame's width, so at 960 x
+	/// 960 the window's box reaches 4/3 of the frame down. Mike's circle is 0.1618 across about 0.317 and 0.1214 down.
+	/// Taken in the window's box with the across at one, as before Q628, its middle was 0.3045 and its radius 0.1814 both
+	/// ways, so 0.167 across and 0.125 down would both be inside.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the frame held at one; the frame's down not applied; the across at the window's height
+	/// over its width.</remarks>
+	[TestMethod]
+	public void ANarrowWindowTakesTheOriginalsCircle()
+	{
+		static int At( float x, float y ) => ParkPicking.LatchFor( [Mike()], new OpenTPW.Vector2( (x + 1f) * 480f, (y + 1f) * 480f ),
+			960f, 960f, Plain );
+
+		Assert.AreEqual( 26, At( 0.317f + 0.157f, 0.611f ) );
+		Assert.AreEqual( 0, At( 0.317f + 0.167f, 0.611f ), "across, past the original's radius" );
+		Assert.AreEqual( 26, At( 0.317f, 0.611f + 0.118f ) );
+		Assert.AreEqual( 0, At( 0.317f, 0.611f + 0.125f ), "down, past the original's radius" );
+	}
+
+	/// <summary>The window's box in the 4:3 frame's: wider, it reaches past the frame across; narrower, down; at 4:3, one.</summary>
+	[TestMethod]
+	public void TheFrameIsTheOriginals4By3()
+	{
+		Assert.AreEqual( (4f / 3f, 1f), (SpritePick.Frame( 1280, 720 ).X, SpritePick.Frame( 1280, 720 ).Y) );
+		Assert.AreEqual( (1f, 1f), (SpritePick.Frame( 1024, 768 ).X, SpritePick.Frame( 1024, 768 ).Y) );
+		Assert.AreEqual( 1f, SpritePick.Frame( 960, 960 ).X );
+		Assert.AreEqual( 4f / 3f, SpritePick.Frame( 960, 960 ).Y, 1e-6f );
+	}
+
+	/// <summary>The window's pixel in the 4:3 frame's -1 to 1 box, down positive: at 2000 x 1200 the box reaches 1.25 of
+	/// the frame across.</summary>
 	[TestMethod]
 	public void APixelIsPutInTheBoxDownPositive()
 	{
 		var box = SpritePick.Box( new OpenTPW.Vector2( 1500, 1080 ), 2000, 1200 );
-		Assert.AreEqual( 0.5f, box.X, 1e-5f );
+		Assert.AreEqual( 0.625f, box.X, 1e-5f );
 		Assert.AreEqual( 0.8f, box.Y, 1e-5f );
 	}
 }

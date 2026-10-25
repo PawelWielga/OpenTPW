@@ -370,19 +370,12 @@ public static class ParkPicking
 	/// <summary>
 	/// The person whose picture a frame's draw latches for a point of a window <paramref name="width"/> by
 	/// <paramref name="height"/> (<see cref="SpritePick.Latch"/>), against the camera that frame was drawn with: the point
-	/// in the -1 to 1 box, and the across at the height over the width (<c>0x008bcbcc</c>).
-	///
-	/// <para>
-	/// <b>That is right at 4:3 and wider, and not below it.</b> <see cref="Camera.Lens"/> holds the horizontal angle of
-	/// a window narrower than 4:3, so the picture's drawn left edge stays at 0.75 of the span while this height over
-	/// width grows past 0.75: the circle's middle then lies height / width / 0.75 times as far from the origin as
-	/// the drawn edge does (1.33 at a square window), and its radius grows the same. The original runs only at 4:3, so the deviation is
-	/// ours alone; not corrected (<c>docs/exe/park-engine.md</c>, "The size a sprite is drawn").
-	/// </para>
+	/// and the pictures in the box of the 4:3 frame the lens draws the original's picture in (<see cref="SpritePick.Frame"/>),
+	/// so the circle is the original's at every window shape.
 	/// </summary>
 	internal static int LatchFor( IEnumerable<SpritePick.Drawn> drawn, Vector2 screen, float width, float height,
 		System.Numerics.Matrix4x4 viewProjection )
-		=> SpritePick.Latch( drawn, SpritePick.Box( screen, width, height ), viewProjection, height / MathF.Max( width, 1f ) );
+		=> SpritePick.Latch( drawn, SpritePick.Box( screen, width, height ), viewProjection, SpritePick.Frame( width, height ) );
 
 	/// <summary>
 	/// What the pointer takes on a cell, as two values the way the original keeps them: the latched person if they

@@ -9993,6 +9993,26 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   the log's `the <vehicle>'s status A -> B on mGameTick N` (`ParkPeople.LogVehicleStatuses`, debug logging) and
   `original/vehicles.py`. From the same crowd 204 went home here and 155 in the original: Q668
   (`q627/PREDICTION.txt`, 5 held, 3 missed; `q627/side-by-side.png`).
+- [x] **Q628. A staff member's click range is very large. Measure first.** From Alexah's play test, 2026-10-21 (note
+  20). Q468 built the original's pick: a circle about the picture's left edge, radius squared `0.0002 x (span across^2 +
+  span down^2)` (`0x0070203c`), the nearer sprite wins (`park-engine.md:1773-1790`), so a large range may be faithful.
+  Measure the radius ours uses against the formula at one staff sprite, and the nearer-wins order with two close (the
+  note's case); if it matches, say so and file a deviation to narrow it only if Alexah asks. Confirm: a pick census of
+  two staff stood near, in both games.
+  **Done (2026-10-25): the reach is the original's; ours was wider across at a wide window, now the original's.** In the
+  original two staff stood 11 px apart (`staffpair.py` waits for them, the clock held): on a 12 px grid the game's latch
+  equalled the decode's at 108 of 108 steps, the nearer (smaller w) took every step of both circles and the farther only
+  its own 14, and Mike Man's r2 0.0178 is the formula's to the digit; his circle reaches 68 x 51 px about the edge of a
+  picture drawn 26 x 49 (`park-engine.md`, "The across, at any window shape"). So a large range, and the nearer of two
+  winning, are faithful; no item to narrow it is filed (Alexah's word would be needed). Ours took the circle in the
+  window's own box with the across at its height over its width, so at 1280 x 720 it reached 1.26 and 1.29 times the
+  original's across (0.94 and 0.97 down); `SpritePick.Frame` now puts the pointer and the pictures in the 4:3 frame the
+  lens draws the original's picture in, the across at 0.75, so the circle is the original's in pixels at every window
+  shape (below 4:3 too, where its middle had stood too far out). After it, 25's and 28's circles are 66.3 x 49.7 and
+  64.0 x 48.0 px and 160 of 160 grid steps latch as the circles say. The console's `circle` prints the middle to a tenth
+  of a pixel; `parkscene.circle()`/`circles()` read its line again (the origin pixel had broken them since Q475). New
+  tool: `original/staffpair.py`. Mutations 9 of 9 caught (`q628/mutations.py`). Harness `~/.cache/tpw-harnesses/q628/`
+  (`PREDICTION.txt` 12 held, 1 missed and recorded, round b void; `side-by-side.png`).
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

@@ -15,13 +15,15 @@ namespace OpenTPW;
 /// last frame's, as the original's pick reads the last draw's latch.
 /// </para>
 /// <para>
-/// <b>The arithmetic is the original's, in its screen box.</b> The pointer is the -1 to 1 box, down the screen
-/// positive; a picture's place is its origin put through this game's lens, which draws the original's (Q441); its
-/// span is the original's, its pixels times twenty over 128, the across times the screen's height over its width
-/// (<c>0x008bcbcc</c>, 0.75 at 4:3). The span is added before the divide by the place's <c>w</c>, which in the
-/// original's projection is the sine of half the 90 degrees the park hands it times the eye's depth
-/// (<c>FUN_00578be0</c>, <c>m23</c>), and the radius is not divided at all, so the circle is the same size on the
-/// screen at every zoom.
+/// <b>The arithmetic is the original's, in its 4:3 frame.</b> The pointer and the picture's place are put in the -1 to 1
+/// box of the 4:3 frame the lens draws the original's picture in (<see cref="Frame"/>), down the screen positive, so a
+/// window of any shape takes the circle the original takes at the same picture: at 1280 x 720 Mike Cooper's 34 x 55
+/// reaches 64 pixels across and 48 down, as the original's 1024 x 768 does at 720 high. A picture's place is its origin
+/// put through this game's lens, which draws the original's (Q441); its span is the original's, its pixels times twenty
+/// over 128, the across times 0.75 (<c>0x008bcbcc</c>, the original's screen's height over its width). The span is added
+/// before the divide by the place's <c>w</c>, which in the original's projection is the sine of half the 90 degrees the
+/// park hands it times the eye's depth (<c>FUN_00578be0</c>, <c>m23</c>), and the radius is not divided at all, so the
+/// circle is the same size on the screen at every zoom.
 /// </para>
 /// </summary>
 public static class SpritePick
@@ -37,6 +39,9 @@ public static class SpritePick
 	/// <summary>The radius squared over the span squared, <c>0x0070203c</c>.</summary>
 	private const float Reach = 0.0002f;
 
+	/// <summary>The original's screen's height over its width, <c>0x008bcbcc</c>: it runs only at 4:3.</summary>
+	private const float HeightOverWidth = 0.75f;
+
 	/// <summary>A place's <c>w</c> over the eye's depth in the original: <c>sin( 90 / 2 )</c>, the projection's
 	/// <c>m23</c> for the angle the park hands it (<c>FUN_00578be0</c>; measured, a <c>w</c> of 77.78 at zoom 110).</summary>
 	internal static readonly float Lens = MathF.Sin( MathF.PI / 4f );
@@ -51,22 +56,19 @@ public static class SpritePick
 	/// <c>0x0058931a</c>): the pointer inside their circle, the nearest by depth of those it is inside, the first drawn of
 	/// two at one depth.
 	/// </summary>
-	/// <param name="pointer">The pointer in the -1 to 1 box, down the screen positive.</param>
+	/// <param name="pointer">The pointer in the 4:3 frame's -1 to 1 box, down the screen positive (<see cref="Box"/>).</param>
 	/// <param name="viewProjection">The view times the projection, a row vector on the left.</param>
-	/// <param name="heightOverWidth">The screen's height over its width, <c>0x008bcbcc</c>.</param>
-	internal static int Latch( IEnumerable<Drawn> drawn, Vector2 pointer, Matrix4x4 viewProjection, float heightOverWidth )
+	/// <param name="frame">The window's -1 to 1 box in the 4:3 frame's, across and down (<see cref="Frame"/>).</param>
+	internal static int Latch( IEnumerable<Drawn> drawn, Vector2 pointer, Matrix4x4 viewProjection, Vector2 frame )
 	{
 		var latched = 0;
 		var nearest = float.MaxValue;
 
 		foreach ( var picture in drawn )
 		{
-			if ( Circle( picture, viewProjection, heightOverWidth ) is not { } circle )
+			if ( Circle( picture, viewProjection, frame ) is not { } circle )
 				continue;
 
-			// Round in the -1 to 1 box, as the original's, which is its circle at 4:3. A window wider than the original's
-			// 4:3 stretches the box across, so at 16:9 the circle reaches 1.27 times the original's across and 0.95 down
-			// at the same height (a picture 34 x 47): a deviation, kept, since the original never draws wider than 4:3.
 			var distance = ((pointer.X - circle.X) * (pointer.X - circle.X)) + ((pointer.Y - circle.Y) * (pointer.Y - circle.Y));
 
 			if ( distance < circle.Reach && circle.Depth < nearest )
@@ -80,17 +82,17 @@ public static class SpritePick
 	}
 
 	/// <summary>
-	/// A picture's circle: its middle in the -1 to 1 box, its radius squared, and the place's depth that decides between
-	/// two; null behind the eye, where nothing is drawn.
+	/// A picture's circle: its middle in the 4:3 frame's -1 to 1 box, its radius squared there, and the place's depth that
+	/// decides between two; null behind the eye, where nothing is drawn.
 	/// </summary>
-	internal static (float X, float Y, float Reach, float Depth)? Circle( Drawn picture, Matrix4x4 viewProjection, float heightOverWidth )
+	internal static (float X, float Y, float Reach, float Depth)? Circle( Drawn picture, Matrix4x4 viewProjection, Vector2 frame )
 	{
 		var place = System.Numerics.Vector4.Transform( new System.Numerics.Vector4( picture.Origin.X, picture.Origin.Y, picture.Origin.Z, 1f ), viewProjection );
 
 		if ( place.W <= 0f )
 			return null;
 
-		var across = Span * heightOverWidth;
+		var across = Span * HeightOverWidth;
 		var left = -picture.OriginX * across;
 		var right = (picture.Width - picture.OriginX) * across;
 
@@ -100,7 +102,7 @@ public static class SpritePick
 
 		var high = picture.Height * Span;
 
-		return ((place.X / place.W) + (left / (place.W * Lens)), -place.Y / place.W,
+		return ((place.X / place.W * frame.X) + (left / (place.W * Lens)), -place.Y / place.W * frame.Y,
 			((high * high) + ((right - left) * (right - left))) * Reach, place.W);
 	}
 
@@ -130,8 +132,27 @@ public static class SpritePick
 		return 0;
 	}
 
-	/// <summary>A pixel of the window in the original's -1 to 1 box, down the screen positive (<c>FUN_00532bd0</c>: x / 1024
-	/// − 1 and y / 767.5 − 1 of its 2048 x 1536 pointer).</summary>
+	/// <summary>A pixel of the window in the 4:3 frame's -1 to 1 box, down the screen positive, as <c>FUN_00532bd0</c> puts
+	/// the original's 2048 x 1536 pointer in its own (x / 1024 − 1 and y / 767.5 − 1).</summary>
 	internal static Vector2 Box( Vector2 screen, float width, float height )
-		=> new( (2f * screen.X / MathF.Max( width, 1f )) - 1f, (2f * screen.Y / MathF.Max( height, 1f )) - 1f );
+	{
+		var frame = Frame( width, height );
+
+		return new( ((2f * screen.X / MathF.Max( width, 1f )) - 1f) * frame.X, ((2f * screen.Y / MathF.Max( height, 1f )) - 1f) * frame.Y );
+	}
+
+	/// <summary>
+	/// How far a window <paramref name="width"/> by <paramref name="height"/> reaches in the -1 to 1 box of the 4:3 frame
+	/// its lens draws the original's picture in (<see cref="Camera.Lens"/>): a wider window holds that frame's height and
+	/// reaches width / height × 0.75 of it across, a narrower one holds its width and reaches height / width / 0.75 of it
+	/// down. One both ways at 4:3.
+	/// </summary>
+	internal static Vector2 Frame( float width, float height )
+	{
+		var aspect = MathF.Max( width, 1f ) / MathF.Max( height, 1f );
+
+		return aspect >= 1f / HeightOverWidth
+			? new( aspect * HeightOverWidth, 1f )
+			: new( 1f, 1f / (aspect * HeightOverWidth) );
+	}
 }

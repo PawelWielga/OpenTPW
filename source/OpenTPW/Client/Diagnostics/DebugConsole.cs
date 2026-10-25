@@ -1538,18 +1538,19 @@ public static class DebugConsole
 				{
 					var who = parts.Length > 1 ? (int)Argument( 1 ) : 0;
 					var listed = 0;
+					var frame = SpritePick.Frame( Screen.Width, Screen.Height );
 
 					foreach ( var picture in ParkGuestSprites.Current?.Drawn ?? [] )
 					{
 						if ( (who != 0 && picture.Thing != who)
-							|| SpritePick.Circle( picture, Camera.ViewMatrix * Camera.ProjMatrix, Screen.Height / MathF.Max( Screen.Width, 1f ) ) is not { } circle )
+							|| SpritePick.Circle( picture, Camera.ViewMatrix * Camera.ProjMatrix, frame ) is not { } circle )
 							continue;
 
 						++listed;
 						var place = System.Numerics.Vector4.Transform( new System.Numerics.Vector4( picture.Origin.X, picture.Origin.Y, picture.Origin.Z, 1f ), Camera.ViewMatrix * Camera.ProjMatrix );
-						Reply( $"circle: thing {picture.Thing} middle ({(circle.X + 1f) * Screen.Width / 2f:F0},{(circle.Y + 1f) * Screen.Height / 2f:F0}) " +
+						Reply( $"circle: thing {picture.Thing} middle ({(circle.X / frame.X + 1f) * Screen.Width / 2f:F1},{(circle.Y / frame.Y + 1f) * Screen.Height / 2f:F1}) " +
 							$"origin pixel ({(place.X / place.W + 1f) * Screen.Width / 2f:F1},{(1f - place.Y / place.W) * Screen.Height / 2f:F1}) " +
-							$"radius {MathF.Sqrt( circle.Reach ) * Screen.Width / 2f:F1} x {MathF.Sqrt( circle.Reach ) * Screen.Height / 2f:F1} r2 {circle.Reach:F4} " +
+							$"radius {MathF.Sqrt( circle.Reach ) / frame.X * Screen.Width / 2f:F1} x {MathF.Sqrt( circle.Reach ) / frame.Y * Screen.Height / 2f:F1} r2 {circle.Reach:F4} " +
 							$"depth {circle.Depth:F2} size {picture.Width}x{picture.Height} origin {picture.OriginX},{picture.OriginY} mirrored {picture.Mirrored} " +
 							$"of {Screen.Width:F0}x{Screen.Height:F0} " +
 							$"tested {(ParkGuestSprites.Current?.Pulled == true ? ParkGuestSprites.PulledDepth( circle.Depth ) : circle.Depth):F2}" );

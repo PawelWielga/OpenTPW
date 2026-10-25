@@ -1865,12 +1865,22 @@ in any, so those three rest on the static reading of their programs, not on a co
 over his origin's row of 720 where the original's 34.7 of 768 is 32.5; after it, the same 26 x 51 picture on both builds
 went 45 to 32 up, 17 to 12 left and 8 to 5 right of his place. **Not shown** on the fixed build: a rider's head, a balloon
 or a thought bubble; all four kinds go through the one `ParkGuestSprites.Corners` and `Extent` (the head with
-`HeadScale`), so the change reaches them, but only a person's body was photographed. **The across, below 4:3.** The span
+`HeadScale`), so the change reaches them, but only a person's body was photographed. **The across, at any window shape** (Q628). The span
 across is multiplied by G (`0x008bcbcc`, height over width) in the original, which runs only at 4:3, where G is 0.75 and
-cancels the screen scale's 1.5; our projection carries the window's aspect itself, so the draw needs no G. The pick passes
-the window's height over its width as G (`ParkPicking.LatchFor`): the same at 4:3 and wider, but below 4:3
-`Camera.Lens` holds the horizontal angle, the drawn edge stays where 4:3 puts it and the circle's middle lies G / 0.75
-times as far out (1.33 at a square window), its radius growing the same. A deviation of ours, not corrected. Below the origin both draw the picture
+cancels the screen scale's 1.5; our projection carries the window's aspect itself, so the draw needs no G. The pick
+(`SpritePick.Frame`, `ParkPicking.LatchFor`) puts the pointer and the place in the -1 to 1 box of the 4:3 frame the lens
+draws the original's picture in (the window's height at 4:3 and wider, its width below) and takes G as 0.75, so its
+circle is the original's in pixels at every window shape. Taken in the window's own box with G its height over its
+width, as from Q468 to Q628, the circle reached 1.26 to 1.29 times the original's across and 0.94 to 0.97 down at
+1280 x 720 (staff 25's 42 x 54 and 28's 30 x 56, `q628/run1`), and below 4:3 its middle stood too far out.
+**Measured with two staff stood near** (`q628/`, `PREDICTION.txt`): in the original (`q628/orig/sweep.sh`, `staffpair.py`,
+the clock held) Mike Man and Duke Mighten stood 11 px apart, w 68.43 and 68.99, r2 0.0178 and 0.0172 (Mike Man's by
+hand 0.01778); on a 12 px grid over the farther's circle the game's latch equalled the decode's at 108 of 108 steps,
+every step inside the nearer's circle latched the nearer and the farther only outside it (14 steps). So the reach is
+large by the original's own rule: Mike Man's picture is drawn 26 x 49 px of the 1024 x 768 frame and his circle reaches
+68 px across and 51 down about its edge, and of two people side by side the nearer takes nearly all the other's circle. Here, after Q628, at 1280 x 720 staff
+25's and 28's circles are 66.3 x 49.7 and 64.0 x 48.0 px, the original's for those pictures at 720 high, and 160 of 160
+grid steps away from an edge latched as the circles say (`q628/run2`). Below the origin both draw the picture
 to its last row (Mike's feet 5 px under the origin), each tested nearer the eye: "What hides a person below their feet",
 below (Q477, Q500).
 

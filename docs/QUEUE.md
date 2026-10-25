@@ -74,12 +74,6 @@ The review of the run of 2026-10-16/17 put Q444 to Q446 first (done; its finding
 The review of the run of 2026-10-17/18 (its findings are `~/.cache/tpw-harnesses/handoff/review3/`, `VERIFY-<n>.md`)
 filed the items that cite it.
 
-- [ ] **Q628. A staff member's click range is very large. Measure first.** From Alexah's play test, 2026-10-21 (note
-  20). Q468 built the original's pick: a circle about the picture's left edge, radius squared `0.0002 x (span across^2 +
-  span down^2)` (`0x0070203c`), the nearer sprite wins (`park-engine.md:1773-1790`), so a large range may be faithful.
-  Measure the radius ours uses against the formula at one staff sprite, and the nearer-wins order with two close (the
-  note's case); if it matches, say so and file a deviation to narrow it only if Alexah asks. Confirm: a pick census of
-  two staff stood near, in both games.
 - [ ] **Q629. A poor park won a golden ticket for happiness.** From Alexah's play test, 2026-10-21 (note 22). The
   original's test is local 2: average happiness above `Happiness` and people in the park above
   `AtLeastThisManyHappyPeople` (`ride-operation.md:3866`); ours is `source/OpenTPW/World/Park/ParkGoldenTickets.cs:89`.
