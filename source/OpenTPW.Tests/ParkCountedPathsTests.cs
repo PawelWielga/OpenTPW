@@ -238,13 +238,15 @@ public class ParkCountedPathsTests
 
 	/// <summary>
 	/// <b>A key let go matches the shortcuts table's row whose key and modifier byte both equal it</b> (<c>0x00748378</c>,
-	/// <c>FUN_0040c990</c>): fourteen rows name no modifier, the two locators and the postcard Ctrl alone.
+	/// <c>FUN_0040c990</c>): fourteen rows name no modifier, the two locators and the postcard Ctrl alone. All-items and
+	/// all-staff are O and E, where the original's are A and S, which pan the camera here.
 	/// </summary>
-	/// <remarks><b>Mutations:</b> any row's key changed; Ctrl taken as no modifier; a modifier left out of the match.</remarks>
+	/// <remarks><b>Mutations:</b> any row's key changed; Ctrl taken as no modifier; a modifier left out of the match; A or S
+	/// given back its row.</remarks>
 	[TestMethod]
 	public void EachShortcutRowIsTheOriginalsKeyAndModifier()
 	{
-		Key[] plain = [Key.Escape, Key.B, Key.H, Key.I, Key.A, Key.S, Key.V, Key.F, Key.L, Key.T, Key.G, Key.R, Key.Space];
+		Key[] plain = [Key.Escape, Key.B, Key.H, Key.I, Key.O, Key.E, Key.V, Key.F, Key.L, Key.T, Key.G, Key.R, Key.Space];
 
 		for ( var row = 0; row < plain.Length; row++ )
 			Assert.AreEqual( row, UI.ParkFrontEnd.ShortcutRow( new Input.KeyRelease( plain[row], Input.Modifiers.None ) ), plain[row].ToString() );
@@ -254,6 +256,8 @@ public class ParkCountedPathsTests
 		Assert.AreEqual( (-1, -1, -1, -1, -1, -1),
 			(Row( Key.P, Input.Modifiers.None ), Row( Key.A, Input.Modifiers.Control ), Row( Key.A, Input.Modifiers.Shift ),
 			Row( Key.S, Input.Modifiers.Alt ), Row( Key.S, Input.Modifiers.Control | Input.Modifiers.Shift ), Row( Key.W, Input.Modifiers.None )) );
+		Assert.AreEqual( (-1, -1, -1, -1), (Row( Key.A, Input.Modifiers.None ), Row( Key.S, Input.Modifiers.None ),
+			Row( Key.D, Input.Modifiers.None ), Row( Key.E, Input.Modifiers.Control )), "A and S pan the camera here" );
 		Assert.AreEqual( (17, "allitems", "allstaff", "map"),
 			(UI.ParkFrontEnd.ShortcutNames.Length, UI.ParkFrontEnd.ShortcutNames[4], UI.ParkFrontEnd.ShortcutNames[5], UI.ParkFrontEnd.ShortcutNames[12]) );
 
@@ -267,7 +271,7 @@ public class ParkCountedPathsTests
 	/// and loans do nothing in Instant Action (<c>0x0049fb8e</c>).
 	/// </summary>
 	/// <remarks>
-	/// <b>Mutations:</b> a row sent to another screen; A and S exchanged; a category left where it was; the map row left
+	/// <b>Mutations:</b> a row sent to another screen; O and E exchanged; a category left where it was; the map row left
 	/// out; the map's gate taken out; a counted row's name changed or its count left out; loans heard in Instant Action;
 	/// the entry price built again with it up.
 	/// </remarks>
@@ -282,8 +286,8 @@ public class ParkCountedPathsTests
 		[
 			(Key.B, "ParkBuyScreen", UI.ParkCategoryScreens.Building, 1),
 			(Key.H, "ParkHireScreen", UI.ParkCategoryScreens.Building, 2),
-			(Key.A, "ParkItemsScreen", UI.ParkCategoryScreens.Information, 5),
-			(Key.S, "ParkStaffScreen", UI.ParkCategoryScreens.Information, 4),
+			(Key.O, "ParkItemsScreen", UI.ParkCategoryScreens.Information, 5),
+			(Key.E, "ParkStaffScreen", UI.ParkCategoryScreens.Information, 4),
 			(Key.V, "ParkVisitorsScreen", UI.ParkCategoryScreens.Information, 6),
 			(Key.T, "ParkStaffCostsScreen", UI.ParkCategoryScreens.Finance, 9),
 			(Key.G, "ParkEntryPriceScreen", UI.ParkCategoryScreens.Finance, 10)
@@ -303,8 +307,8 @@ public class ParkCountedPathsTests
 		Press( stack, Key.Escape );
 		Press( stack, Key.Space );
 		Assert.AreEqual( "ParkGadget, ParkViewfinder, ParkMapScreen", Names( stack ), "Space: the map" );
-		Press( stack, Key.A );
-		Assert.AreEqual( "ParkGadget, ParkViewfinder, ParkMapScreen", Names( stack ), "A over the map: the map's" );
+		Press( stack, Key.O );
+		Assert.AreEqual( "ParkGadget, ParkViewfinder, ParkMapScreen", Names( stack ), "O over the map: the map's" );
 		Press( stack, Key.Escape );
 		Assert.AreEqual( "ParkGadget, ParkViewfinder", Names( stack ) );
 
@@ -336,44 +340,82 @@ public class ParkCountedPathsTests
 		var box = new AWindow( stack, modal: true, parkScreen: false );
 
 		stack.Open( box );
-		Press( stack, Key.S );
+		Press( stack, Key.E );
 		Assert.AreEqual( "ParkGadget, ParkViewfinder, AWindow", Names( stack ), "under a modal window: the window's" );
 		stack.Close( box );
 
 		OpenMenu( stack );
-		Press( stack, Key.S );
+		Press( stack, Key.E );
 		Assert.AreEqual( "ParkGadget, ParkViewfinder, GameMenu", Names( stack ), "under the game menu: the menu's" );
 		Press( stack, Key.Escape );
 
 		Press( stack, Key.F3 );
-		Press( stack, Key.S );
+		Press( stack, Key.E );
 		Assert.AreEqual( "ParkGadget, ParkViewfinder", Names( stack ), "under the full-screen view: not heard" );
 		Press( stack, Key.F3 );
 
 		InFirstPerson( true );
-		Press( stack, Key.S );
+		Press( stack, Key.E );
 		WithControl( stack, Key.P );
 		Assert.AreEqual( ("ParkGadget, ParkViewfinder", 1), (Names( stack ), Times( "POSTCARD_SHORTCUT" )), "in first person: the postcard alone" );
 		InFirstPerson( false );
 
-		Press( stack, Key.S );
+		Press( stack, Key.E );
 		Assert.AreEqual( "ParkGadget, ParkViewfinder, ParkStaffScreen", Names( stack ), "over the park: the staff" );
 
 		UI.ParkCategoryScreens.Seed();
 	}
 
 	/// <summary>
-	/// <b>W and D scroll the orbit camera and A and S do not</b>: those two are the shortcuts' all-items and all-staff
-	/// rows (<c>ParkOrbitCameraMode.ScrollAxes</c>).
+	/// <b>W, S, A and D pan the orbit camera beside the keypad's 8, 2, 4 and 6, and Up and Down zoom beside the keypad's 1
+	/// and 3</b>, each with no modifier held, as the original's camera rows (<c>0x00748158</c>); a held pan settles at
+	/// <c>sqrt( zoom ) x 10</c> a second on the screen's axes, eases up by half every 31 ms and coasts out
+	/// (<c>ParkOrbitCameraMode.PanInput</c>, <c>ZoomInput</c>, <c>PanTarget</c>, <c>StepScroll</c>).
 	/// </summary>
-	/// <remarks><b>Mutations:</b> A or S given back their scroll; W or D taken away.</remarks>
+	/// <remarks><b>Mutations:</b> a key's direction turned over; a modifier let through (Ctrl+S, Alt+S); a keypad key left
+	/// out; Up and Down exchanged; the speed not by the root of the zoom; the yaw's turn the other way; the rise or the
+	/// coast at another rate; the floor of 0.1 left out.</remarks>
 	[TestMethod]
-	public void OnlyWAndDScrollTheOrbitCamera()
+	public void TheKeysPanAndZoomTheOrbitCamera()
 	{
-		Assert.AreEqual( (0f, 0f), ParkOrbitCameraMode.ScrollAxes( [Key.A, Key.S] ), "A and S" );
-		Assert.AreEqual( (1f, 0f), ParkOrbitCameraMode.ScrollAxes( [Key.W] ) );
-		Assert.AreEqual( (0f, 1f), ParkOrbitCameraMode.ScrollAxes( [Key.D] ) );
-		Assert.AreEqual( (1f, 1f), ParkOrbitCameraMode.ScrollAxes( [Key.W, Key.A, Key.S, Key.D] ), "all four" );
+		Assert.AreEqual( ((1f, 0f), (-1f, 0f), (0f, -1f), (0f, 1f)),
+			(Pan( Key.W ), Pan( Key.S ), Pan( Key.A ), Pan( Key.D )), "W, S, A, D" );
+		Assert.AreEqual( ((1f, 0f), (-1f, 0f), (0f, -1f), (0f, 1f)),
+			(Pan( Key.Keypad8 ), Pan( Key.Keypad2 ), Pan( Key.Keypad4 ), Pan( Key.Keypad6 )), "the keypad's 8, 2, 4, 6" );
+		Assert.AreEqual( ((0f, 0f), (0f, 0f), (0f, 0f), (0f, 0f), (1f, 0f), (1f, -1f)),
+			(Pan( Key.ControlLeft, Key.S ), Pan( Key.AltLeft, Key.S ), Pan( Key.ShiftRight, Key.W ), Pan( Key.W, Key.S ),
+			Pan( Key.W, Key.Keypad8 ), Pan( Key.W, Key.A )), "a modifier held; both ways; two keys one way; two axes" );
+		Assert.AreEqual( (0f, 0f), Pan( Key.Up, Key.Left, Key.E, Key.O ), "the arrows and the moved shortcuts pan nothing" );
+
+		Assert.AreEqual( (-1f, 1f, -1f, 1f), (Zoom( Key.Up ), Zoom( Key.Down ), Zoom( Key.Keypad1 ), Zoom( Key.Keypad3 )) );
+		Assert.AreEqual( (0f, 0f, 0f, 0f), (Zoom( Key.Up, Key.Down ), Zoom( Key.ControlLeft, Key.Up ), Zoom( Key.W ), Zoom( Key.Left )) );
+
+		AreNear( (0f, 104.881f), ParkOrbitCameraMode.PanTarget( 1f, 0f, 0f, 110f ), "forward at yaw 0, zoom 110" );
+		AreNear( (-83.666f, 0f), ParkOrbitCameraMode.PanTarget( 0f, -1f, 0f, 70f ), "left at zoom 70" );
+		AreNear( (-114.018f, 0f), ParkOrbitCameraMode.PanTarget( 1f, 0f, MathF.PI / 2f, 130f ), "forward a quarter turned" );
+
+		var delta = Time.Delta;
+		Time.Delta = 0.031f;
+
+		try
+		{
+			AreNear( (50f, -25f), ParkOrbitCameraMode.StepScroll( Vector2.Zero, new Vector2( 100f, -50f ), true ), "half the gap in 31 ms" );
+			AreNear( (73.345f, 0f), ParkOrbitCameraMode.StepScroll( new Vector2( 100f, 0.09f ), new Vector2( 5f, 5f ), false ), "the coast, and under 0.1 nought" );
+		}
+		finally
+		{
+			Time.Delta = delta;
+		}
+
+		static (float, float) Pan( params Key[] down ) => ParkOrbitCameraMode.PanInput( down );
+
+		static float Zoom( params Key[] down ) => ParkOrbitCameraMode.ZoomInput( down );
+
+		static void AreNear( (float X, float Y) expected, Vector2 actual, string what )
+		{
+			Assert.AreEqual( expected.X, actual.X, 0.01f, what );
+			Assert.AreEqual( expected.Y, actual.Y, 0.01f, what );
+		}
 	}
 
 	/// <summary>

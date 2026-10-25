@@ -5,6 +5,10 @@ newest first. The pre-commit hook (`tools/status-sweep.py`) moves an item's acco
 written above it. **Grep it by Q-number; never read it whole.** Each account is frozen at its item's date: a
 later item may have run what an earlier one lists as untested.
 
+- Q630 (the key puff at park entry, decoded and measured; no build): both games entering Lost Kingdom from its island
+  panel as a copy of Alexah's Full Simulation profile, once each on the desktop, ours at 1280 x 720 and the original
+  filmed at 30 a second. Not looked at: the other three islands, a player with one key or none to spare, an entry by a
+  click on the view in ours (the Return key was used; the original was clicked), the puff's sound.
 - Q629 (a poor park's golden ticket measured; nothing changed): both games on Lost Kingdom's stock park played as Full
   Simulation by a profile with no ticket, the original off-screen and ours on the desktop at 1280 x 720, one run of
   each to the first award. Not looked at: Alexah's own park of the play test (no file of it was saved, nor its log), a

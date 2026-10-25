@@ -2846,8 +2846,9 @@ alone. A screen row calls `ParkCategoryScreens.Show`, the opener the category bu
 it; Space opens the map as its button does; R runs the research opener ("The research opener and its two boxes").
 Park status, finances and the postcard are counted (`PARK_STATUS_SCREEN`, `FINANCE_SCREEN`, `POSTCARD_SHORTCUT`), and
 the two locators open ("The staff and visitor locators", Q424), loans as `LOANS_SCREEN` outside Instant Action and not at all inside it; G with the entry price up
-leaves it as it is. The orbit camera's W and D still scroll it, which the original's does not (its camera table binds the
-arrows and the keypad); A and S scroll it no longer. On the stock park (`q366/run-fix2`, the final game binary): each
+leaves it as it is. **Rows 4 and 5 are O and E here, not the original's A and S**, which pan the camera with W and D
+(Q631, `park-engine.md`, "The point of interest's edge"); the help bar's nine rows that name A and S name O and E
+(`HelpBar.OurKeys`). On the stock park (`q366/run-fix2`, the final game binary): each
 key's `Park keys: shortcut row N, name` line and the screen `windows` named, a frame a screen (`run-fix2/1-items-by-A.png`
 to `9-map.png`); A held a second left the camera's point where it was, W held a second moved it 200 units.
 

@@ -228,7 +228,7 @@ public static partial class Input
 	/// <summary>The modifiers held as the frame ends: a click's or a held state's, never a key-up's (<see cref="Releases"/>).</summary>
 	internal static Modifiers Held => HeldIn( Keyboard.KeysDown );
 
-	private static Modifiers HeldIn( IReadOnlyCollection<Key> keysDown )
+	internal static Modifiers HeldIn( IReadOnlyCollection<Key> keysDown )
 	{
 		var held = Modifiers.None;
 

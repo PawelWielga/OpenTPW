@@ -15,7 +15,7 @@ namespace OpenTPW;
 /// <see cref="Menu"/> is not one of them: both scenes read Escape from its release instead.
 /// </para>
 /// <para>
-/// <b>The shortcuts table's fifteen screen rows are read by key, not through these</b>: the park takes B, H, I, A, S, V,
+/// <b>The shortcuts table's fifteen screen rows are read by key, not through these</b>: the park takes B, H, I, O, E, V,
 /// F, L, T, G, R, Space and Ctrl with S, V or P from <see cref="Input.Releases"/>, as it takes Escape
 /// (<c>ParkFrontEnd.ShortcutRow</c>), so their bindings here stay unread.
 /// </para>
@@ -93,17 +93,19 @@ public enum InputButton
 	ParkInfo,
 
 	/// <summary>
-	/// All Attractions (A)
+	/// All Attractions (O)
 	/// Shows all attractions in the park.
 	/// </summary>
-	[DefaultKey( Key.A )]
+	/// <remarks>Not the original's A, which pans the camera here (<c>ParkFrontEnd.ShortcutRow</c>).</remarks>
+	[DefaultKey( Key.O )]
 	AllAttractions,
 
 	/// <summary>
-	/// All Staff (S)
+	/// All Staff (E)
 	/// Shows all staff in the park.
 	/// </summary>
-	[DefaultKey( Key.S )] 
+	/// <remarks>Not the original's S, which pans the camera here (<c>ParkFrontEnd.ShortcutRow</c>).</remarks>
+	[DefaultKey( Key.E )]
 	AllStaff,
 
 	/// <summary>

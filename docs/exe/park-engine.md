@@ -419,8 +419,20 @@ either: the soft bound on the walker ("Nothing clamps the position", under "Walk
   from z 810 at 863.621; keypad 4 at rotation 90 from z 810 left by z, at 862.013. The held term read 0.10488 a
   millisecond. Released past the edge, the point stayed there. Started past the edge (x 1240), keypad 6 moved nothing.
   Past the edge the original draws flat grass (`q625/orig/b-right-2-after.png`); what that ground is was not read.
-- **OpenTPW** adds W and D's scroll with no bound (`ParkOrbitCameraMode.cs:225-227`, 200 units a second): from x 920, D
-  held 4 s ran to x 1727, over the sea (`q625/side-by-side.png`, `q625/ours-run1/confirm.txt`). The build is Q667.
+- **The arrows driven by key** (Q631, `q631/orig/run.sh`, `original/camrate.py`; the stock park at (480, 400), zoom 110,
+  the follow off): Up held went from 110 to 70 at 0.0513 a millisecond and stopped there, Down from 70 to 130 at 0.0519;
+  with the reference player's 90 degree option set (`[0x0078d912]` 1) Left raised the asked rotation by 90 once and
+  Right lowered it by 90; W and D moved nothing; the point stood through all six. The table's keys, read from the exe
+  (`lib/bindtables.py`), by action: 0 and 1 `0x2600` Up and `0x2800` Down, 6 and 7 `0x2500` Left and `0x2700` Right,
+  `0xd` to `0x10` the keypad's 8, 2, 4 and 6, `0x15` and `0x16` keypad 1 and 3, `0x12` and `0x13` keypad 9 and 7. No row of the six tables binds
+  D, E, J, K, M, N, O, Q, U, W, X, Y or Z with no modifier.
+- **OpenTPW** (Q631, `ParkOrbitCameraMode`): the keypad's 8, 2, 4 and 6 pan, and so do W, S, A and D, its deviation
+  (`PanInput`; all-items and all-staff move to O and E, `ParkFrontEnd.ShortcutRow`, and the help bar's nine rows say so,
+  `HelpBar.OurKeys`); each only with no modifier held. A held pan settles at `sqrt( zoom ) x 10` a second, the term eased
+  up by half every 31 ms and coasting out at 10 a second, nought under 0.1 (`PanTarget`, `StepScroll`), and ends a
+  locator's follow (`Panning`). Up, Down and keypad 1 and 3 zoom at 50 a second. Nothing bounds the point: from x 920, a
+  key held 4 s runs on over the sea (`q625/side-by-side.png`, on the old 200 a second); the bound is Q667. Keypad 9 and
+  7 do not turn, and the turn's step is not the original's (Q23).
 
 The camera persists a *saved* POI and *saved* Y rotation as well as the *required* ones — the shape of a camera that leaves its position and is put back (camcorder mode does exactly that).
 

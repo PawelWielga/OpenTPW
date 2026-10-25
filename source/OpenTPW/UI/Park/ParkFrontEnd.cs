@@ -234,6 +234,9 @@ internal sealed class ParkFrontEnd : Panel
 	/// The shortcuts table's row a key let go matches, or -1: its key and its modifier byte both equal, the first row
 	/// that does (<c>FUN_0040c990</c>). Every row names no modifier but the two locators and the postcard, which name Ctrl
 	/// alone (<c>0x0c</c>). Row 0 (Escape) is <see cref="MenuKey"/>'s and row 16 (C) the camera modes'.
+	/// <b>Not the original's keys for rows 4 and 5</b>: its all-items is A and its all-staff S; here they are O (the
+	/// objects) and E (the employees), two letters no table of the original binds with no modifier, so that W, A, S and D
+	/// all pan the camera (<c>ParkOrbitCameraMode.PanInput</c>). The staff locator stays Ctrl+S.
 	/// </summary>
 	internal static int ShortcutRow( Input.KeyRelease release )
 	{
@@ -257,8 +260,8 @@ internal sealed class ParkFrontEnd : Panel
 			Key.B => 1,
 			Key.H => 2,
 			Key.I => 3,
-			Key.A => 4,
-			Key.S => 5,
+			Key.O => 4,
+			Key.E => 5,
 			Key.V => 6,
 			Key.F => 7,
 			Key.L => 8,

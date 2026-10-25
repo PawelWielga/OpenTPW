@@ -137,8 +137,45 @@ public sealed class ParkOrbitCameraMode : CameraMode
 		return _groundHeight;
 	}
 
-	/// <summary>How fast the point of interest scrolls, in world units a second. Provisional - see Update.</summary>
-	private const float ScrollSpeed = 200f;
+	/// <summary>
+	/// How fast Up or Down held moves the zoom, in units a second: the original's 0.05 a millisecond (<c>0x006fddbc</c>,
+	/// <c>0x0042b4e2</c>..<c>0x0042b512</c>), so the whole 70 to 130 in 1.2 s.
+	/// </summary>
+	internal const float ZoomKeyRate = 50f;
+
+	/// <summary>
+	/// How fast the pan's term catches up with a held key: half the gap every 31 ms. The original halves it every frame
+	/// (<c>0x006fddfc</c>), so its rise is quicker at a higher frame rate; this one is the same at every rate, its frame
+	/// taken as the park's 31 ms tick.
+	/// </summary>
+	private const float PanRiseRate = 22.36f;
+
+	/// <summary>
+	/// How fast the pan's term coasts away with no key held, a second: the original divides it by <c>1 + 0.01 dt</c> a
+	/// frame (<c>0x006fddc8</c>), which this is at a frame of no length; at its 30 frames a second the coast is about an
+	/// eighth shorter.
+	/// </summary>
+	private const float PanCoastRate = 10f;
+
+	/// <summary>
+	/// The pan's term, in world units a second along the map's own axes: the original's two scroll terms
+	/// (<c>0x00790a88</c>, <c>0x00790a90</c>; <c>docs/exe/park-engine.md</c>, "The point of interest's edge"), so a pan
+	/// eases up and coasts out.
+	/// </summary>
+	internal static Vector2 Scroll { get; set; }
+
+	/// <summary>
+	/// Whether the last update had a pan key held: the original ends a locator's follow on any frame with a pan's input
+	/// (<c>0x0042ba37</c>, <c>0x0042ba92</c>), which <see cref="UI.ParkLocator"/> reads at its next frame.
+	/// </summary>
+	public static bool Panning { get; private set; }
+
+	/// <summary>The zoom keys' and the pan keys' last frame, so the log says when each starts and ends.</summary>
+	private static float _zoomHeld;
+
+	private static (float Forward, float Right) _panHeld;
+
+	private static float _panSeconds;
 
 	/// <summary>
 	/// The angle the original's park camera hands its projection: pi/2 at its reset (<c>FUN_0042a990</c>,
@@ -184,9 +221,8 @@ public sealed class ParkOrbitCameraMode : CameraMode
 			return;
 		}
 
-		// Spin and zoom. These reuse bindings that already exist rather than inventing new ones: the
-		// original's camera table is decoded (docs/exe/park-engine.md, "The turn") but its rates and keys are not built
-		// (Q23, Q27), so the controls are provisional and the geometry below is the part that matches it.
+		// The turn reuses the Left and Right arrows' bindings, the original's keys; its step and its easing are not the
+		// original's (docs/exe/park-engine.md, "The turn"; Q23).
 		//
 		// Not while one of the park's screens is open: opening one switches the camera's table off and clears its
 		// rows' latches (FUN_00485b70, 0x00485ccd), and the screen's handler runs the shortcuts' table alone, so no
@@ -209,34 +245,96 @@ public sealed class ParkOrbitCameraMode : CameraMode
 		if ( Input.Mouse.Wheel != 0 && !UI.WindowStack.WheelTaken )
 			Zoom = (Zoom - (Input.Mouse.Wheel * 5f)).Clamp( MinZoom, MaxZoom );
 
-		// Scroll the point of interest across the ground, in whatever direction the camera faces, so
-		// that "forward" means forward on the screen rather than forward on the map.
-		var (forward, right) = ScrollAxes( Input.Keyboard.KeysDown );
+		// The keys a box being typed into holds are the box's.
+		var down = keys && !Input.TextCaptured ? Input.Keyboard.KeysDown : [];
+		var zoom = ZoomInput( down );
 
-		if ( keys && (forward != 0f || right != 0f) )
+		if ( zoom != 0f )
+			Zoom = (Zoom + (zoom * ZoomKeyRate * Time.Delta)).Clamp( MinZoom, MaxZoom );
+
+		if ( zoom != _zoomHeld )
+			Log.Info( $"Camera: zoom by key {(zoom < 0f ? "in" : zoom > 0f ? "out" : "let go")}, zoom {Zoom:F2}" );
+
+		_zoomHeld = zoom;
+
+		var (forward, right) = PanInput( down );
+		var panned = Panning;
+		Panning = forward != 0f || right != 0f;
+		Scroll = StepScroll( Scroll, PanTarget( forward, right, Yaw, Zoom ), Panning );
+		PointOfInterest += new Vector3( Scroll.X * Time.Delta, Scroll.Y * Time.Delta, 0f );
+
+		if ( Panning != panned || (Panning && (forward, right) != _panHeld) )
 		{
-			// Not the original's: a scroll here does not end a locator's follow, where any pan in the original does
-			// (0x0042ba37, 0x0042ba92; Q23), so the follow puts the point back each frame.
-			var scroll = ScrollSpeed * Time.Delta;
-
-			// The same basis the eye is placed from, and the same one ParkCamcorderCameraMode walks
-			// along, so forward scrolls the view forward at every yaw, not only at multiples of pi/4.
-			PointOfInterest += new Vector3(
-				((forward * -MathF.Sin( Yaw )) + (right * MathF.Cos( Yaw ))) * scroll,
-				((forward * MathF.Cos( Yaw )) + (right * MathF.Sin( Yaw ))) * scroll,
-				0f );
+			Log.Info( $"Camera: pan by key {(Panning ? $"forward {forward:F0} right {right:F0}" : $"let go after {_panSeconds:F3} s")}, scroll "
+				+ $"{Scroll.Length:F1} a second, point ({PointOfInterest.X:F1},{PointOfInterest.Y:F1}) yaw {Yaw:F2} zoom {Zoom:F0}" );
+			_panSeconds = 0f;
 		}
+
+		if ( Panning )
+			_panSeconds += Time.Delta;
+
+		_panHeld = (forward, right);
 
 		Place( GroundUnderPoi() );
 	}
 
 	/// <summary>
-	/// Which way the held keys scroll the view: W forward and D right, and nothing back or left. <b>Not the
-	/// original's</b>, whose camera table binds the arrows and the keypad (<c>0x00748158</c>); and A and S are its
-	/// shortcuts' all-items and all-staff rows (<c>ParkFrontEnd.ShortcutRow</c>), so here they scroll nothing.
+	/// Which way the held keys pan the view, forward and right on the screen, each -1, 0 or 1. The keypad's 8, 2, 4 and
+	/// 6 are the original's (camera actions <c>0xd</c> to <c>0x10</c> of <c>0x00748158</c>). <b>W, S, A and D are not the
+	/// original's</b>: its tables bind W and D to nothing and A and S to the shortcuts' all-items and all-staff rows,
+	/// which here are O and E (<c>ParkFrontEnd.ShortcutRow</c>). As each of the original's rows, a key counts only with no
+	/// modifier held, so Ctrl+S and Alt+S pan nothing; both ways held cancel, where the original's later row wins.
 	/// </summary>
-	internal static (float Forward, float Right) ScrollAxes( IReadOnlyCollection<Key> down )
-		=> (down.Contains( Key.W ) ? 1f : 0f, down.Contains( Key.D ) ? 1f : 0f);
+	internal static (float Forward, float Right) PanInput( IReadOnlyCollection<Key> down )
+	{
+		if ( Input.HeldIn( down ) != Input.Modifiers.None )
+			return (0f, 0f);
+
+		var forward = Held( down, Key.W, Key.Keypad8 ) - Held( down, Key.S, Key.Keypad2 );
+		var right = Held( down, Key.D, Key.Keypad6 ) - Held( down, Key.A, Key.Keypad4 );
+
+		return (forward, right);
+	}
+
+	/// <summary>
+	/// Which way the held keys zoom, -1 in or 1 out: Up and keypad 1 in, Down and keypad 3 out (camera actions 0,
+	/// 1, <c>0x15</c>, <c>0x16</c>; bits <c>0x20</c> and <c>0x40</c> of <c>[0x00790aac]</c>, <c>0x0042b38c</c>..<c>0x0042b3e8</c>),
+	/// with no modifier held. Both held cancel, as the original's two steps do.
+	/// </summary>
+	internal static float ZoomInput( IReadOnlyCollection<Key> down )
+		=> Input.HeldIn( down ) != Input.Modifiers.None
+			? 0f
+			: Held( down, Key.Down, Key.Keypad3 ) - Held( down, Key.Up, Key.Keypad1 );
+
+	private static float Held( IReadOnlyCollection<Key> down, Key a, Key b )
+		=> down.Contains( a ) || down.Contains( b ) ? 1f : 0f;
+
+	/// <summary>
+	/// The pan a held key settles at, in world units a second on the map's axes: <c>sqrt( zoom ) x 0.01</c> a millisecond,
+	/// 104.9 a second at zoom 110 (<c>0x006fddf8</c>, <c>0x006fddfc</c>), turned by the yaw so that forward is forward on
+	/// the screen - the same basis the eye is placed from and <see cref="ParkCamcorderCameraMode"/> walks along.
+	/// </summary>
+	internal static Vector2 PanTarget( float forward, float right, float yaw, float zoom )
+	{
+		var speed = MathF.Sqrt( zoom ) * 10f;
+
+		return new Vector2(
+			((forward * -MathF.Sin( yaw )) + (right * MathF.Cos( yaw ))) * speed,
+			((forward * MathF.Cos( yaw )) + (right * MathF.Sin( yaw ))) * speed );
+	}
+
+	/// <summary>
+	/// The pan's term a frame on: eased up to the target while a key is held, coasting out with none, and nought under
+	/// 0.1 a second, the original's 0.0001 a millisecond (<c>0x0074c988</c>).
+	/// </summary>
+	internal static Vector2 StepScroll( Vector2 term, Vector2 target, bool held )
+	{
+		var next = held
+			? term + ((target - term) * Time.SmoothingFactor( PanRiseRate ))
+			: term * (1f - Time.SmoothingFactor( PanCoastRate ));
+
+		return new Vector2( MathF.Abs( next.X ) < 0.1f ? 0f : next.X, MathF.Abs( next.Y ) < 0.1f ? 0f : next.Y );
+	}
 
 	/// <summary>
 	/// Swings the eye around the point of interest and looks back at it.
@@ -345,6 +443,8 @@ public sealed class ParkOrbitCameraMode : CameraMode
 		PointOfInterest = new Vector3( 475f, 175f, 0f );
 		Yaw = 0f;
 		Zoom = 110f;
+		Scroll = Vector2.Zero;
+		Panning = false;
 	}
 
 	/// <summary>

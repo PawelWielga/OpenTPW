@@ -389,18 +389,21 @@ public class ParkFullScreenViewTests
 	}
 
 	/// <summary>
-	/// <b>A and S held scroll the orbit camera nowhere, and W held scrolls it</b>: A and S are the shortcuts' all-items
-	/// and all-staff rows (<c>ParkOrbitCameraMode.ScrollAxes</c>).
+	/// <b>A held pans the orbit camera left and S back, a park screen up stops the keys, and Up held zooms in at 50 a
+	/// second</b> (<c>ParkOrbitCameraMode.Update</c>): A and S are no longer the shortcuts' rows, and
+	/// <c>ParkOrbitCameraMode.Panning</c> says a pan was held, which ends a locator's follow.
 	/// </summary>
-	/// <remarks><b>Mutations:</b> the camera reading <c>Input.Forward</c> and <c>Input.Right</c> again scrolls on A and S.</remarks>
+	/// <remarks><b>Mutations:</b> the pan left out of the frame; the park screen's gate taken out; the zoom's rate or
+	/// direction; Panning not set.</remarks>
 	[TestMethod]
-	public void AAndSHeldScrollTheOrbitCameraNowhere()
+	public void TheWASDKeysPanTheOrbitCameraAndUpZooms()
 	{
 		var stack = APark();
 		var park = (Level)RuntimeHelpers.GetUninitializedObject( typeof( Level ) );
 		typeof( Level ).GetProperty( nameof( Level.Kind ) )!.SetValue( park, Level.Scene.Park );
 		typeof( Level ).GetField( "_windows", BindingFlags.Instance | BindingFlags.NonPublic )!.SetValue( park, stack );
 		Level.Current = park;
+		ParkOrbitCameraMode.Forget();
 		Camera.SetCameraMode<ParkOrbitCameraMode>();
 		var delta = Time.Delta;
 		Time.Delta = 0.1f;
@@ -408,17 +411,40 @@ public class ParkFullScreenViewTests
 		try
 		{
 			var from = ParkOrbitCameraMode.PointOfInterest;
-			WorldFrame( stack, park, Down( Key.A ), Down( Key.S ) );
-			WorldFrame( stack, park );
-			Assert.AreEqual( from, ParkOrbitCameraMode.PointOfInterest, "A and S held" );
+			WorldFrame( stack, park, Down( Key.A ) );
+			Assert.IsTrue( ParkOrbitCameraMode.Panning, "A held is a pan" );
+			Assert.IsTrue( ParkOrbitCameraMode.PointOfInterest.X < from.X - 1f && ParkOrbitCameraMode.PointOfInterest.Y == from.Y, "A held: left" );
+			Assert.AreEqual( "ParkGadget, ParkViewfinder", Names( stack ), "and opens no screen" );
 
-			WorldFrame( stack, park, Up( Key.A ), Up( Key.S ), Down( Key.W ) );
-			WorldFrame( stack, park, Up( Key.W ) );
-			Assert.AreNotEqual( from, ParkOrbitCameraMode.PointOfInterest, "W held" );
+			WorldFrame( stack, park, Up( Key.A ) );
+			Assert.IsFalse( ParkOrbitCameraMode.Panning, "let go" );
+			ParkOrbitCameraMode.Scroll = Vector2.Zero;
+
+			from = ParkOrbitCameraMode.PointOfInterest;
+			WorldFrame( stack, park, Down( Key.S ) );
+			Assert.IsTrue( ParkOrbitCameraMode.PointOfInterest.Y < from.Y - 1f && ParkOrbitCameraMode.PointOfInterest.X == from.X, "S held: back" );
+			WorldFrame( stack, park, Up( Key.S ) );
+			ParkOrbitCameraMode.Scroll = Vector2.Zero;
+
+			Press( stack, Key.E );
+			Assert.AreEqual( "ParkGadget, ParkViewfinder, ParkStaffScreen", Names( stack ), "E: the staff" );
+			from = ParkOrbitCameraMode.PointOfInterest;
+			WorldFrame( stack, park, Down( Key.W ), Down( Key.Up ) );
+			Assert.AreEqual( (from, 110f, false), (ParkOrbitCameraMode.PointOfInterest, ParkOrbitCameraMode.Zoom, ParkOrbitCameraMode.Panning), "under a park screen: no camera key" );
+			WorldFrame( stack, park, Up( Key.W ), Up( Key.Up ) );
+			Press( stack, Key.Escape );
+
+			WorldFrame( stack, park, Down( Key.Up ) );
+			Assert.AreEqual( 105f, ParkOrbitCameraMode.Zoom, 0.001f, "Up held 0.1 s" );
+			WorldFrame( stack, park, Up( Key.Up ), Down( Key.Down ) );
+			Assert.AreEqual( 110f, ParkOrbitCameraMode.Zoom, 0.001f, "Down held 0.1 s" );
+			WorldFrame( stack, park, Up( Key.Down ) );
 		}
 		finally
 		{
 			Time.Delta = delta;
+			ParkOrbitCameraMode.Forget();
+			UI.ParkCategoryScreens.Seed();
 		}
 	}
 

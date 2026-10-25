@@ -22,14 +22,15 @@ public class InputBindingTests
 
 	/// <summary>
 	/// The six chords the game actually ships, each with the plain-key shortcut it must not also fire.
-	/// Ctrl+O has no plain-O shortcut to collide with, so it stands as the control case.
+	/// Ctrl+S has no plain-S shortcut to collide with, S panning the camera here and all-staff moved to E, so it stands as
+	/// the control case; plain O is all-items, moved from A.
 	/// </summary>
 	private static IEnumerable<object[]> Chords => new[]
 	{
-		new object[] { Key.O, InputButton.OpenPark, InputButton.OpenPark },
+		new object[] { Key.O, InputButton.OpenPark, InputButton.AllAttractions },
 		new object[] { Key.C, InputButton.ClosePark, InputButton.CamcorderMode },
 		new object[] { Key.H, InputButton.ToggleHelpBar, InputButton.HireStaff },
-		new object[] { Key.S, InputButton.StaffLocator, InputButton.AllStaff },
+		new object[] { Key.S, InputButton.StaffLocator, InputButton.StaffLocator },
 		new object[] { Key.V, InputButton.VisitorLocator, InputButton.AllVisitors },
 		new object[] { Key.P, InputButton.SendEmailPostcard, InputButton.Pause },
 	};

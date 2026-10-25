@@ -80,7 +80,7 @@ internal sealed class ParkLocator
 	internal int Actor { get; private set; }
 
 	/// <summary>Whether the camera follows <see cref="Actor"/> each frame - <c>gui_CameraFlags</c> bit <c>0x1000</c>.
-	/// Not ended by the orbit camera's scroll, where any pan in the original ends the follow (<c>0x0042ba37</c>, <c>0x0042ba92</c>; Q23).</summary>
+	/// Ended by a pan of the orbit camera's keys, as any pan in the original ends it (<c>0x0042ba37</c>, <c>0x0042ba92</c>).</summary>
 	internal bool Following { get; private set; }
 
 	/// <summary>The cells this frame's patrol edges were laid on (<see cref="PatrolEdgeCells"/>), none unless a fenced member is followed.</summary>
@@ -409,7 +409,8 @@ internal sealed class ParkLocator
 	/// <summary>
 	/// A frame, the panel's <c>0x1e</c>: the camera put on whoever it follows and a fenced member's patrol edges drawn
 	/// (<c>FUN_004b3640</c>), then the corner's picture brought up to date (<c>FUN_004b3580</c>). First person takes the
-	/// camera off them, as the camera's change of mode clears the follow (<c>0x0042ae52</c>).
+	/// camera off them, as the camera's change of mode clears the follow (<c>0x0042ae52</c>), and so does a frame the orbit
+	/// camera was panned by key.
 	/// </summary>
 	internal void Update()
 	{
@@ -420,6 +421,12 @@ internal sealed class ParkLocator
 
 		if ( ParkCamcorderCameraMode.Active )
 			Following = false;
+
+		if ( Following && ParkOrbitCameraMode.Panning )
+		{
+			Log.Info( $"Park locator: the pan ends the follow of thing {Actor}" );
+			Following = false;
+		}
 
 		// The original keeps the thing's address and reads whatever is left there: a person gone from the park is let go
 		// of here instead, the strip hidden and the camera left, as a step that finds nobody does.

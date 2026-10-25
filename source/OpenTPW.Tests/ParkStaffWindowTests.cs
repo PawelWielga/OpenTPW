@@ -288,6 +288,36 @@ public class ParkStaffWindowTests
 	}
 
 	/// <summary>
+	/// <b>A frame the orbit camera was panned by key ends the locator's follow, the strip left on the member</b>
+	/// (<c>0x0042ba37</c>, <c>0x0042ba92</c>); a frame with no pan leaves it following.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the locator not reading the pan.</remarks>
+	[TestMethod]
+	public void APanEndsTheLocatorsFollow()
+	{
+		var member = Mechanic;
+		var panning = typeof( ParkOrbitCameraMode ).GetProperty( nameof( ParkOrbitCameraMode.Panning ) )!;
+		ParkStaffWindow.Open( _stack, member.ThingId );
+		ParkGadgetPressTests.Settle( _gadget );
+		Click( Window!.Root, 0x521 );
+		ParkGadgetPressTests.Settle( _gadget );
+
+		try
+		{
+			Locator.Update();
+			Assert.AreEqual( (member.ThingId, true), (Locator.Actor, Locator.Following), "no pan: followed" );
+
+			panning.SetValue( null, true );
+			Locator.Update();
+			Assert.AreEqual( (member.ThingId, false, true), (Locator.Actor, Locator.Following, Locator.Strip.Visible), "a pan: let go" );
+		}
+		finally
+		{
+			panning.SetValue( null, false );
+		}
+	}
+
+	/// <summary>
 	/// <b>Ctrl+S with the window up opens the staff's locator on its member</b> (<c>FUN_004b3f60( [0x007c2658] )</c>), and
 	/// with none up on nobody (<c>FUN_004b3f60( 0 )</c>).
 	/// </summary>

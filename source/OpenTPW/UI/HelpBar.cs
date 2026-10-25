@@ -56,9 +56,9 @@ internal sealed class HelpBar
 		if ( Input.Pressed( InputButton.ToggleHelpBar ) )
 			GameOptions.Current.PopupHelp = !GameOptions.Current.PopupHelp;
 
-		var text = !Enabled || helpText < 0 ? ""
+		var text = OurKeys( !Enabled || helpText < 0 ? ""
 			: values.Length > 0 ? Localization.FormatHelp( helpText, values )
-			: Localization.Help( helpText );
+			: Localization.Help( helpText ) );
 		_bar.Visible = text.Length > 0;
 
 		if ( !_bar.Visible )
@@ -71,6 +71,16 @@ internal sealed class HelpBar
 		var height = (lineHeight * 0xc00 / UiFonts.SetScreenHeight) + 10;
 		_bar.Rect = Top is { } top ? new UiRect( Left, top, Right, top + height ) : new UiRect( Left, Bottom - height, Right, Bottom );
 	}
+
+	/// <summary>
+	/// A row's text with the keys this game moved: the nine rows that end "(A)" list all the items and "(S)" all the
+	/// staff, keys that pan the camera here, so they end "(O)" and "(E)" instead (<c>ParkFrontEnd.ShortcutRow</c>). Not
+	/// the shipped text; no other row ends in either.
+	/// </summary>
+	internal static string OurKeys( string text )
+		=> text.EndsWith( " (A)", StringComparison.Ordinal ) ? text[..^3] + "(O)"
+			: text.EndsWith( " (S)", StringComparison.Ordinal ) ? text[..^3] + "(E)"
+			: text;
 
 	/// <summary>What the strip says now, or nothing while it is hidden.</summary>
 	public string Text => _bar.Visible ? _bar.Text ?? "" : "";

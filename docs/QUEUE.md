@@ -74,21 +74,6 @@ The review of the run of 2026-10-16/17 put Q444 to Q446 first (done; its finding
 The review of the run of 2026-10-17/18 (its findings are `~/.cache/tpw-harnesses/handoff/review3/`, `VERIFY-<n>.md`)
 filed the items that cite it.
 
-- [ ] **Q631. WASD scroll the camera, the arrow keys' meaning settled first (notes 6 and 11).** From Alexah's play test,
-  2026-10-21 (notes 6 and 11). **Alexah (2026-10-21): W, A, S and D all move the camera; the screen shortcuts on A and S
-  move to other free keys, said at the site.** Now only W (forward) and D (right) scroll, nothing back or left, a said
-  deviation (`ParkOrbitCameraMode.cs:228-239`; `hud.md:2768-2770`). The arrow keys do not dolly in and out, where the
-  mouse wheel does (`ParkOrbitCameraMode.cs:208-209`). The docs conflict on the original's arrows: they bind pan, with
-  the keypad (`hud.md:2769`; `park-engine.md:411`, "the keypad's 8, 2, 4 and 6"), or they are the zoom's Up and Down
-  (QUEUE:1930; `hud.md:1043`, bits `0x20`, `0x40`, measured in camcorder mode). Settle first, from the camera table at
-  `0x00748158` and the original driven by key, what each arrow does in the orbit view (turn on Left and Right is
-  `park-engine.md:391-393`). Then build: WASD pan on the camera's axes, the arrows as the original's; find the free keys
-  for the all-items and all-staff shortcut rows (`ParkFrontEnd.ShortcutRow`) and say the move at the site and the
-  website's key list. A pan ends a locator's follow (`park-engine.md:405-410`). Confirm: each key held in the running
-  game, the point moved, a log line.
-  - **Note (Q625):** the camera table read settles the arrows (`park-engine.md`, "The point of interest's edge"): Up
-    and keypad 1 zoom in at 0.05 a millisecond, Down and keypad 3 out, Left and keypad 9, Right and keypad 7 turn; only
-    the keypad's 8, 2, 4 and 6 (and the pointer past 0.95) pan. Read, not yet driven by key in the original.
 - [ ] **Q632. Building a path makes no sound. Decode first.** From Alexah's play test, 2026-10-21 (note 9). No doc,
   queue line or counted gap names a laying sound; only the demolish sound `0x96`-`0x99` by size (`park-engine.md:2599`;
   Q38, QUEUE:1978-1982, counts the demolish side) and the refusal `0xaf` are known. Find in the original's path tool
@@ -258,9 +243,8 @@ filed the items that cite it.
   (`(sqrt( zoom ) x 0.02 x input + term) x 0.5` a frame, divided by `1 + 0.01 dt` with no input), and where the point
   stood past an edge at the frame's start (x < 0, y < 0, x > cellsX x cellSizeX, y > cellsY x cellSizeY of
   `HeightfieldFile`) drop a push further out: the term becomes the old one over `1 + 0.01 dt`. A per-frame recurrence
-  on milliseconds: put it on `Time.Delta` (CLAUDE.md rule 10) and say the deviation at the site. Today W and D scroll at
-  200 units a second with no bound (`ParkOrbitCameraMode.cs:225-227`); the keys and the speed are Q631's, which this
-  should not pre-empt beyond the bound. Past the edge the original draws flat grass (`q625/orig/b-right-2-after.png`) and
+  on milliseconds: put it on `Time.Delta` (CLAUDE.md rule 10) and say the deviation at the site. The keys, the speed
+  and the term are built (Q631: `ParkOrbitCameraMode.Scroll`, `StepScroll`), with no bound: this item adds the bound. Past the edge the original draws flat grass (`q625/orig/b-right-2-after.png`) and
   ours the sea: read what that ground is before building anything there. Confirm: a pan held against each of the four
   edges in both games (`original/campoi.py`, `q625/orig/run.sh`), the same stopping cell (x 97 or -2, y 86 or -2).
 - [ ] **Q668. From a crowd, guests go home faster than the original's. Measure first.** From Q627. Loaded with
@@ -2183,7 +2167,9 @@ The decode session writes the finding to `docs/exe/` and stops. The build is the
   From the run review (2026-10-17, Q440): W and D scroll the orbit camera (`ParkOrbitCameraMode.cs`) without ending a
   locator's follow, where any pan in the original does (`0x0042ba37`, `0x0042ba92`; `ParkLocator.Following` is cleared only
   at its own fold, a mode change, a person gone and a step that finds nobody), so scrolling with the locator following
-  does nothing here: the follow puts the point back each frame. Counted nowhere; clear it where a pan is built.
+  does nothing here: the follow puts the point back each frame. Built for the keys by Q631 (`ParkOrbitCameraMode.Panning`,
+  read by `ParkLocator.Update`); the pointer's push (Q27) is not built. **Note (Q631):** keypad 9 and 7 turn in the
+  original (camera actions `0x12` and `0x13`) and are not bound here.
   From the fork watch (2026-10-18, `verify-world-a.md` M1, `verify-other-a.md` M1; `park-engine.md`, "A sprite's camera
   sector reads the asked rotation"): the original picks a sprite's camera sector from the **asked** rotation
   `[0x00790a38]`, not the eased one, as `8 - (trunc( (rotation + pi/8) x 8 / 2 pi ) & 7)` (`0x00542010`), and a draw
@@ -2225,7 +2211,9 @@ The decode session writes the finding to `docs/exe/` and stops. The build is the
     (QUEUE:1927-1930), strafing is Q17 (QUEUE:1832). Note 34 (the camera after leaving) is split into Q626.
 - [ ] **Q27. Pushing the mouse at the screen edge does not scroll.** The "push scroll" option exists and
   is read by nothing. `ParkOrbitCameraMode.Update` scrolls from keys only. Decode the camera
-  binding table at `0x00748158` (`park-engine.md`, "The park camera"), then build.
+  binding table at `0x00748158` (`park-engine.md`, "The park camera"), then build. **Note (Q631):** the push feeds the
+  term the keys now drive (`ParkOrbitCameraMode.PanInput`'s two inputs into `PanTarget` and `StepScroll`, the original's
+  `(input - 0.95) x 10`: a key is the pointer at the frame's very edge, 0.5 there, which `PanTarget` takes as 1).
   From Q440 (`park-engine.md`, "The follow"): the original pans at the edge only with `[0x0078d910]` clear, an Options
   toggle (written at `0x004a3882`, control `0x1d4c9`); the update zeroes the pointer's terms when it is set. Which of the
   Options screen's rows it is, and whether it is the "push scroll" row, is not read.

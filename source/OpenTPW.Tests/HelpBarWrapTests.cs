@@ -38,6 +38,31 @@ public class HelpBarWrapTests
 		return BitmapFont.Get( "GAME9.bf4" ) ?? throw new AssertFailedException( "GAME9.bf4 did not load" );
 	}
 
+	/// <summary>
+	/// <b>The nine rows that name A for all the items and S for all the staff name O and E</b>, the keys moved so that W,
+	/// A, S and D pan the camera (<c>HelpBar.OurKeys</c>); Ctrl-S, the visitors' V and every other row stay as shipped.
+	/// </summary>
+	/// <remarks><b>Mutations:</b> the two letters exchanged; the rule matching any "S)", which turns Ctrl-S; a row left out;
+	/// the strip not asking the rule.</remarks>
+	[TestMethod]
+	public void TheMovedShortcutsRowsNameTheirNewKeys()
+	{
+		FileSystem = GameData.Required();
+
+		Assert.AreEqual( ("Left-click to list all the items in the park (O)", "Left-click to list all the staff in the park (E)"),
+			(HelpBar.OurKeys( Localization.Help( 75 ) ), HelpBar.OurKeys( Localization.Help( 74 ) )) );
+		Assert.AreEqual( ("Left-click to locate members of staff (Ctrl-S)", "Left-click to list all the visitors in the park (V)"),
+			(HelpBar.OurKeys( Localization.Help( 93 ) ), HelpBar.OurKeys( Localization.Help( 100 ) )) );
+
+		Font();
+		var bar = new HelpBar();
+		bar.Update( 74 );
+		Assert.AreEqual( "Left-click to list all the staff in the park (E)", bar.Text, "the strip shows it" );
+
+		var moved = Enumerable.Range( 0, 2000 ).Where( row => HelpBar.OurKeys( Localization.Help( row ) ) != Localization.Help( row ) );
+		CollectionAssert.AreEqual( new[] { 74, 75, 94, 112, 126, 136, 138, 188, 190 }, moved.ToArray() );
+	}
+
 	[TestMethod]
 	public void TheGatesRowBreaksBeforeTicketAsTheOriginals()
 	{

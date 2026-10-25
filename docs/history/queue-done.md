@@ -10043,6 +10043,32 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
     is still up and draws it over everything, a cloud of keys (`emitters.py`; `q630/side-by-side.png`). A scratch build
     with no owner draws the same cloud. Q61's fade starts 3 s after the puff has gone in the original and hides none of
     it. `docs/exe/lobby.md`, "The key puff at park entry". The build is Q669; the flight's length, measured here, Q670.
+- [x] **Q631. WASD scroll the camera, the arrow keys' meaning settled first (notes 6 and 11).** From Alexah's play test,
+  2026-10-21 (notes 6 and 11). **Alexah (2026-10-21): W, A, S and D all move the camera; the screen shortcuts on A and S
+  move to other free keys, said at the site.** Now only W (forward) and D (right) scroll, nothing back or left, a said
+  deviation (`ParkOrbitCameraMode.cs:228-239`; `hud.md:2768-2770`). The arrow keys do not dolly in and out, where the
+  mouse wheel does (`ParkOrbitCameraMode.cs:208-209`). The docs conflict on the original's arrows: they bind pan, with
+  the keypad (`hud.md:2769`; `park-engine.md:411`, "the keypad's 8, 2, 4 and 6"), or they are the zoom's Up and Down
+  (QUEUE:1930; `hud.md:1043`, bits `0x20`, `0x40`, measured in camcorder mode). Settle first, from the camera table at
+  `0x00748158` and the original driven by key, what each arrow does in the orbit view (turn on Left and Right is
+  `park-engine.md:391-393`). Then build: WASD pan on the camera's axes, the arrows as the original's; find the free keys
+  for the all-items and all-staff shortcut rows (`ParkFrontEnd.ShortcutRow`) and say the move at the site and the
+  website's key list. A pan ends a locator's follow (`park-engine.md:405-410`). Confirm: each key held in the running
+  game, the point moved, a log line.
+  - **Note (Q625):** the camera table read settles the arrows (`park-engine.md`, "The point of interest's edge"): Up
+    and keypad 1 zoom in at 0.05 a millisecond, Down and keypad 3 out, Left and keypad 9, Right and keypad 7 turn; only
+    the keypad's 8, 2, 4 and 6 (and the pointer past 0.95) pan. Read, not yet driven by key in the original.
+  - **Done (2026-10-25).** Driven by key in the original (`q631/orig/`, `original/camrate.py`): Up held took the zoom
+    110 to 70 at 0.0513 a millisecond, Down 70 to 130 at 0.0519, Left and Right a quarter turn a press (the reference
+    player's 90 degree option), W and D nothing. Built (`ParkOrbitCameraMode`): W, S, A and D pan beside the keypad's 8,
+    2, 4 and 6 at the original's `sqrt( zoom ) x 10` a second, easing up and coasting out, with no modifier held, and a
+    pan ends the locator's follow; Up, Down and keypad 1 and 3 zoom at 50 a second. All-items and all-staff move to O
+    and E (no table of the original binds either), and the help bar's nine rows naming A and S name them. In the
+    running game (`q631/ours-run3`, 11 of 11, the final binary): each WASD key held about 1.18 s moved the point 119 to 122 units in the
+    hold (the model's within 1) and coasted 9 to 10, W at yaw 90 down x; Up 0.5 s gave zoom 85, then 70 and 130; O and E
+    opened the two screens; D ended Mike Cooper's follow; the staff window's b_allstaff read "(E)"
+    (`q631/side-by-side.png`). Tests 3907 with the game; mutants 20 of 20 caught. Website key list: W A S D pan, Up and
+    Down zoom, O all items, E all staff (the Sentinel's).
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.
