@@ -9932,6 +9932,23 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   since a placing click is dealt after the frame's sweep (`park.md`, "Who advances a channel, and when"). The click's own frame held on screen:
   main drew the finished fountain (`q623/run4c`), this build its bare floor (`run4`), the original the footprint then
   the bare floor (`orig/a`). The original's build sparkles are Q663.
+- [x] **Q624. The map screen is badly broken.** From Alexah's play test, 2026-10-21 (note 26). Known: no overlay, no
+  terrain colours, its zoom and scroll "not decoded" (`source/OpenTPW/UI/Park/ParkMapScreen.cs:22-40`; Q450 (2),
+  QUEUE:2398-2403). "Badly broken" is wider than that and the note lists no faults, so first take the screen's faults on
+  a screenshot beside the original's (stream `0x00774da0`: viewport, scroll and zoom buttons, six layer switches, the
+  map pauses the game: `hud.md:1842-1860`, `:1958`), list each, and file each against Q450 or here. Build the viewport,
+  the zoom and the scroll first. Confirm: the map open in both games, the same park.
+  **Done (the view, the zoom and the scroll; the rest filed):** beside the original's map in the stock park
+  (`q624/orig/a-1-open.png`, ours before `q624/run0/1-open.png`) the faults were: no frame (map_win) and the park round
+  the picture, the picture the right way up where the original's is upside down, fitted whole where the original's is
+  drawn at its screen's pixels about the camera's cell, a zoom of 1x to 4x by doubling where the original's is 1 to 3 by
+  halves and kept between openings, arrows that stepped an eighth on a click where the original's move a cell a pass while
+  held (taking the pointer by rectangles, so the up arrow's middle went to the right arrow), no arrow keys, keypad zoom,
+  edge push or right drag, OK and a click on the map that left the camera where the original puts it on the view's cell,
+  the help bar at the bottom where the original's moves to the top, and the camera's keys heard under the map. All built
+  (`ParkMapView`, `ParkMapScreen`; `hud.md`, "The map's view"); the original measured in rounds a and b (`mapview.py`).
+  Filed: the switches, the pickers and the overlay (Q664, with Q450 (2)), the hover and its click (Q665), the advisor's
+  line 0x130 (Q666).
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

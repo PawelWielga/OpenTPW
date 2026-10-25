@@ -74,12 +74,6 @@ The review of the run of 2026-10-16/17 put Q444 to Q446 first (done; its finding
 The review of the run of 2026-10-17/18 (its findings are `~/.cache/tpw-harnesses/handoff/review3/`, `VERIFY-<n>.md`)
 filed the items that cite it.
 
-- [ ] **Q624. The map screen is badly broken.** From Alexah's play test, 2026-10-21 (note 26). Known: no overlay, no
-  terrain colours, its zoom and scroll "not decoded" (`source/OpenTPW/UI/Park/ParkMapScreen.cs:22-40`; Q450 (2),
-  QUEUE:2398-2403). "Badly broken" is wider than that and the note lists no faults, so first take the screen's faults on
-  a screenshot beside the original's (stream `0x00774da0`: viewport, scroll and zoom buttons, six layer switches, the
-  map pauses the game: `hud.md:1842-1860`, `:1958`), list each, and file each against Q450 or here. Build the viewport,
-  the zoom and the scroll first. Confirm: the map open in both games, the same park.
 - [ ] **Q625. The park camera can leave the park, to the map's edge and the ocean. Decode first.** From Alexah's play
   test, 2026-10-21 (note 36, shot4). `ParkOrbitCameraMode` adds to the point of interest with no bound
   (`ParkOrbitCameraMode.cs:224-226`). The original's pan limit is not documented (only the zoom clamp [70,130],
@@ -278,6 +272,22 @@ filed the items that cite it.
   film `original/shots/q623-a.mkv` frames 87 to 120); ours rises with none, and nothing counts it. Which effect it is,
   who starts it (the placer, the build path or the item's own effect nodes) and when it ends are not decoded. Decode
   it, count it where ours reaches it, then build it. Confirm: the same placement filmed in both games.
+- [ ] **Q664. The map's switches, pickers and overlay. Decode first.** From Q624. The original's map (stream `0x00774da0`,
+  `hud.md`, "The map screen's stream") has six layer switches (rides, sideshows, shops, miscellaneous, tracks, visitors),
+  the staff picker (four portraits on the right) and the metric picker (three faces, bottom right), none built here, and
+  over the picture paints the park's own land (bright, outlined), each thing's footprint, the people, a rectangle about
+  the camera's view and a highlight (`q624/orig/a-1-open.png`), from the 128 x 128 code grid `FUN_005f2050` fills and
+  `FUN_005f2380` paints (Q450 (2): the colours, the ramp; `hud.md`, "Sprite sheets", is UNRESOLVED). Counted `MAP_OVERLAY` as the map opens. Decode the painter,
+  the six sprite sheets and the view rectangle, then build the switches and the pickers with what they show. Confirm: each
+  switch and picker beside the original's, the same park.
+- [ ] **Q665. The map's hover and its click on a hovered record.** From Q624. On the viewport's `0x10001` the original keeps
+  the nearest record of its list `+0x20080` within 5 of the pointer's picture point (`0x005f198e`..`0x005f1a9a`), and a
+  click on the map with one kept hands its `+0x18` to `FUN_00486920` after the close (`0x005f1de8`; with none, a word
+  `+0x20064` and the table at `0x007cfb90`, `0x005f1df5`). Not read: what the list holds and what `FUN_00486920` does.
+  Counted `MAP_HOVER`. Wants Q664's list. Decode, then build. Confirm: a hover and a click in both games.
+- [ ] **Q666. The map's advisor line 0x130.** From Q624. The map's opener posts the advisor's line `0x130`
+  (`FUN_00486b00`, `0x005f100d`) and its close withdraws it (`FUN_00486b40`); here the map posts nothing (counted `MAP_ADVISOR_LINE`). Read the row
+  and its response, build it as the buy screen's own line is, and confirm what he says in both games, the same park.
 - [ ] **Q598. Every clip's scale track posed.** From Q597. The scale track (`0x80|0x100`; FileFormats `models.md`,
   "Scale") is in 644 tracks of 192 clips, 128 of them in 54 Lost Kingdom clips of 19 wads (`lib/scalescan.py`):
   the shops `fries`, `steak`, `cost_shp`, the rides `lookout`, `monkey`, `porkpie`, `tourride`, `tvsim`, `volcano`,
@@ -2695,7 +2705,7 @@ The decode session writes the finding to `docs/exe/` and stops. The build is the
   2026-10-16 (`verify-ui-hud.md` M3, M4, C3). (1) The buy screen's stats panel is unbuilt (`ParkBuyScreen.cs`); its
   gauges are in `hud.md`, "The shop, sideshow and ride windows" (`0x004abb00`: excitement, text from
   `Upgrades[0].RedLineCapacity`, a gauge from `Upgrades[0].WearRate`; label text not read). (2) The map overlay is
-  unbuilt (`ParkMapScreen.cs`); its colours are immediates in `0x005f0700` (`hud.md`, "The map's colours"); the
+  unbuilt (`ParkMapScreen.cs`; its view, zoom and scroll are built, Q624, and the overlay's build is Q664); its colours are immediates in `0x005f0700` (`hud.md`, "The map's colours"); the
   channel order is inferred, and which record colours which code is not traced. (3) The frame routine brackets the
   draws with `0x0046c100` (on `0x007b05a8`, at `0x0054e310`) and `0x0046c110` (at `0x0054e34f`), which sets `+4`
   (`0x007b05ac`) to the latched thing when its kind byte `+2` is 1, 4, 5, 6, 7, 8 or `0x12`, sets `+8` to the first

@@ -1381,6 +1381,17 @@ public static class DebugConsole
 
 			// Where the park camera is, in world units and in grid cells - the two coordinate systems
 			// a park is described in, and the pair most worth seeing side by side while placing things.
+			// The park map's census: its view (centre, zoom, the picture's source and where it lands) and the help bar's
+			// place; "map zoom Z" sets the kept zoom for a repeatable picture.
+			case "map":
+				if ( parts.Length > 2 && parts[1] == "zoom" )
+					UI.ParkMapView.KeptZoom = Math.Clamp( Argument( 2 ), UI.ParkMapView.MinZoom, UI.ParkMapView.MaxZoom );
+
+				Reply( UI.ParkMapScreen.Current is { } map
+					? $"{map.View} helpbar top {map.HelpBarTop?.ToString() ?? "none"} option {(GameOptions.Current.RightButtonScroll ? "right button" : "pushscroll")}"
+					: $"map: not open, kept zoom {UI.ParkMapView.KeptZoom:0.0}" );
+				break;
+
 			case "camera":
 				if ( parts.Length > 2 )
 					ParkOrbitCameraMode.PointOfInterest = new Vector3( Argument( 1 ), Argument( 2 ), 0f );

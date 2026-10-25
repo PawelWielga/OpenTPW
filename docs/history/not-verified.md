@@ -5,6 +5,14 @@ newest first. The pre-commit hook (`tools/status-sweep.py`) moves an item's acco
 written above it. **Grep it by Q-number; never read it whole.** Each account is frozen at its item's date: a
 later item may have run what an earlier one lists as untested.
 
+- Q623 (a bought thing drawn as its build begins): seen with the Round Fountain alone, in the stock park, Instant
+  Action, put down by the console's `buy` (stepped) and by a real click (the click's frame held by `stall`), and in the
+  original from `late30.TPWS` through its buy screen. Not looked at: any other bought thing's first frame (every item
+  with a role 0 clip takes the same path; a vehicle has none), the other themes, Full Simulation (the same code), a
+  thing moved (its put-down is a purchase, the same path). A file saved before a bought thing's script has run a word now
+  writes its model's words with the construction clip bound, the original's build path's, not compared with an
+  original's file. The step from the build clip's last frame to the idle loop's first (`q623/run2`, f211) was not
+  compared frame by frame with the original's.
 - Q622 (the seaplane drawn on every visit): seen in the stock park, Instant Action, the seaplane summoned by `load 40`
   twice at one camera on the harbour (rot 0), and in the original sent round by a write of its `VAR_TRIGGER`
   (`original/retrigger.py`) and by its own summons, from `late30` with seed 3. Not run: the ferry's and the bus's later

@@ -418,7 +418,7 @@ public class ParkEscapeOnReleaseTests
 	}
 
 	/// <summary>A park's interface: the real front end over a stack made without its constructor, with its gadget and viewfinder up.</summary>
-	private static UI.WindowStack APark()
+	internal static UI.WindowStack APark()
 	{
 		FileSystem = GameData.Required();
 
@@ -439,7 +439,7 @@ public class ParkEscapeOnReleaseTests
 	}
 
 	/// <summary>One frame of the game with these key events: the input, every window's update, then the stack's keys.</summary>
-	private static void Frame( UI.WindowStack stack, params KeyEvent[] keys )
+	internal static void Frame( UI.WindowStack stack, params KeyEvent[] keys )
 	{
 		Input.UpdateFrom( new Snapshot( keys ) );
 
@@ -464,9 +464,9 @@ public class ParkEscapeOnReleaseTests
 		public bool IsMouseDown( MouseButton button ) => false;
 	}
 
-	private static KeyEvent Down( Key key ) => new( key, true, ModifierKeys.None );
+	internal static KeyEvent Down( Key key ) => new( key, true, ModifierKeys.None );
 
-	private static KeyEvent Up( Key key ) => new( key, false, ModifierKeys.None );
+	internal static KeyEvent Up( Key key ) => new( key, false, ModifierKeys.None );
 
 	private static string Names( UI.WindowStack stack ) => string.Join( ", ", stack.Windows.Select( window => window.GetType().Name ) );
 }

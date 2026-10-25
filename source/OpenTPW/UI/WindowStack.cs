@@ -122,6 +122,13 @@ internal sealed class WindowStack : Panel
 	/// </summary>
 	internal static bool ParkScreenOpen { get; private set; }
 
+	/// <summary>
+	/// Whether the park map is open: the original hands its root to <c>FUN_00485b70</c> as it does a park screen's
+	/// (<c>0x005f0c01</c>), which switches the camera's table off, so the arrow keys are the map's. Written as
+	/// <see cref="ParkScreenOpen"/> is.
+	/// </summary>
+	internal static bool MapOpen { get; private set; }
+
 	/// <summary>Whether one of the park's screens is open in this stack - see <see cref="ParkScreenOpen"/>.</summary>
 	internal bool ParkScreenUp => _windows.Exists( window => window.ParkScreen );
 
@@ -153,6 +160,20 @@ internal sealed class WindowStack : Panel
 
 	/// <summary>The help bar itself, for the console's look at how it last set its text.</summary>
 	internal HelpBar HelpBar => _helpBar;
+
+	/// <summary>
+	/// Where the help bar's top stands, or null for its place at the bottom - see <see cref="HelpBar.Top"/>. A stack made
+	/// without its constructor, as a test makes one, has no bar, and this then does nothing.
+	/// </summary>
+	internal int? HelpBarTop
+	{
+		get => _helpBar?.Top;
+		set
+		{
+			if ( _helpBar != null )
+				_helpBar.Top = value;
+		}
+	}
 
 	/// <summary>
 	/// What the pointer was over at the last update, for the bar: a control, <see cref="Background"/> (a modal window, a
@@ -387,6 +408,8 @@ internal sealed class WindowStack : Panel
 		CoverKeys = null;
 		CoverRightClick = null;
 		ParkScreenOpen = false;
+		MapOpen = false;
+		HelpBarTop = null;
 		_pointed = null;
 		PostHelp( -1, [] );
 		_helpBar.ReleaseText();
@@ -405,6 +428,7 @@ internal sealed class WindowStack : Panel
 			window.Update();
 
 		ParkScreenOpen = ParkScreenUp;
+		MapOpen = _windows.Exists( window => window is ParkMapScreen );
 
 		// Ours: the hover is hit-tested once a frame, and a press made after the last frame goes to it. The original works
 		// its hover out only on a move and when its interface changes (FUN_006589f9), so a press made after a window

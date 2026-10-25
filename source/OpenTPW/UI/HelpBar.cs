@@ -39,6 +39,12 @@ internal sealed class HelpBar
 		Visible = false
 	};
 
+	/// <summary>
+	/// Where its top stands instead of its bottom at 1520, or null for the bottom: the park map moves it to the top of
+	/// the screen while it is up (<c>FUN_00492530</c>, which moves the label's top and keeps its left where handed -1).
+	/// </summary>
+	public int? Top { get; set; }
+
 	/// <summary>Whether it is switched on - the original's Popup Help option, which the button glints also wait on.</summary>
 	public bool Enabled => GameOptions.Current.PopupHelp;
 
@@ -63,7 +69,7 @@ internal sealed class HelpBar
 
 		var lineHeight = UiFonts.Get( HelpFont )?.LineHeight ?? 13;
 		var height = (lineHeight * 0xc00 / UiFonts.SetScreenHeight) + 10;
-		_bar.Rect = new UiRect( Left, Bottom - height, Right, Bottom );
+		_bar.Rect = Top is { } top ? new UiRect( Left, top, Right, top + height ) : new UiRect( Left, Bottom - height, Right, Bottom );
 	}
 
 	/// <summary>What the strip says now, or nothing while it is hidden.</summary>

@@ -1830,7 +1830,8 @@ Six toggles — **0x982, 0x987, 0x989, 0x993, 0x994, 0x983** — each restored f
 groups: **0x98b** with options 0x98e/0x98f/0x98c/0x98d from `+0x1c`, and **0x996** with 0x998/0x997/0x999
 from `+0x20` — the **metric pickers**. **0x991** is a label, font 4, **yellow** (0xff,0xff,0,0xff).
 **0x990** and **0x995** are display-only (vtable+0x14 with 0), and 0x990's depth+2 is handed to the six
-toggles. **0x992** takes handler `LAB_005f0b20`; 0x98a/0x984/0x981/0x988 get `MoveToXY(0,10)`.
+toggles. **0x992** takes handler `LAB_005f0b20` (it calls the viewport's proc `0x005f18d0` on the static); 0x98a/0x984/0x981/0x988
+get `FUN_00668f35( 0, 10 )`, a repeating button's two delays (below, "The map's view").
 
 ### Sprite sheets
 
@@ -1851,6 +1852,73 @@ the table layout first.**
 *quiet* stop, not the crying one. So unlike the gadget this screen legitimately pauses. It posts advisor
 message **0x130** as it opens, and refuses to open at all if the game menu is up (`FUN_0048c8d0`) or if it is
 already open.
+
+### The map's view (Q624)
+
+Decoded from the disassembly (`testme.objdump`) and measured in the original's stock park (`q624/orig`, rounds a and b,
+`mapview.py`). **Built** (`ParkMapView`, `ParkMapScreen`).
+
+The screen is one static object at `0x00f86db8` (the `ECX` of every call); its constructor (`0x005f0690`) sets the zoom
+`+0x5c` to 1.0, and nothing else does, so **the zoom outlives the screen** until the game is quit (the original reopened at
+1.5 after a plus).
+
+| Field | What | Written by |
+|---|---|---|
+| `+0x10`, `+0x14` | the pointer, layout units | the move message `0x10001`/`0x10003` |
+| `+0x24`, `+0x28` | the heightfield's cells across and down, 96 and 85 (`FUN_00450b00`: `[[0x007a0854]+0x6c]+0x18`, `+0x1c`) | the opener |
+| `+0x48`, `+0x4c` | the picture's size, 512 and 512 | `FUN_005f1ea0` |
+| `+0x54`, `+0x58` | the centre, in cells, floats | below |
+| `+0x5c` | the zoom, 1.0 to 3.0 | the constructor, the zoom cases |
+| `+0x20084` | the right button held from a press on the map | the viewport's `0x10005`/`0x10004` with button 1 |
+
+- **Opened on the camera's cell** (`0x005f0eba`..`0x005f0fa2`): `(int)( [0x00790ab8] * 0.1 )` and `(int)( [0x00790ac0] *
+  0.1 )` (the camera's point; equal to its look-at `0x007908f0`/`f8` in both rounds), held to 0 and to `MapInfo`'s limits
+  less one (`[0x007a0314] - 1` = 94, `[0x007a0374] - 1` = 83), then to the heightfield's cells: a camera on (950,260)
+  opened on 94, not 95.
+- **Moved** by `0x005f35b0( direction, cells )`: direction 0 takes from the centre across, 1 adds, **2 adds to the centre
+  down, 3 takes** (its jump table `0x005f366c`), then the centre is held to 0 and the cells less one (95, 84) and the view
+  redone (`0x005f3230`). Callers, each one cell: the arrows' repeats `0x10009`/`0x10008` (0x981 down 3, 0x984 left 0,
+  0x988 right 1, 0x98a up 2; the table `0x005f18a4`), and the key cases `0x1000a` (`VK_LEFT` 0, `VK_UP` 2, `VK_RIGHT` 1,
+  `VK_DOWN` 3, `0x005f16aa`). The arrows are repeating buttons (flag `0x20`, delays 0 and 10 ms by `FUN_00668f35`): from
+  the first interface pass after the press one repeat a pass while the pointer is on the arrow (`FUN_00668dd9`), and a
+  button that has repeated posts no `0x100` as it is let go (`FUN_00668eff`), so no click sound (`0x00485780`) and no
+  click: the arrows' `0x100` cases do nothing. Measured: the right arrow held, 30 cells a second under the 30 fps cap; the
+  Up key one cell up.
+- **The edges and the right button** follow the Options' Scroll (`[0x0078d910]`, `GameOptions` `+0x38`). With Pushscroll
+  (0) the root's frame message (`0x005f126b`) takes the pointer as fractions of 2048 and 1536 (`0x00703014`, `0x00703018`)
+  held to 0..1, and inside 0.01 of an edge (`0x0070301c`, `0x00703024`) moves `(0.01 - f) * 250` (`0x00703020`) cells a
+  pass: left 0, right 1, **top 2 (up)**, bottom 3; measured 2.5 a frame on the top edge. With Right button scroll (1) the
+  viewport's frame message (`0x005f1913`), while `+0x20084` is set, moves right by `(x - 1024) / 409.6` and down (3) by
+  `(y - 768) / 307.2` cells a pass (`0x00703034`, `0x00703038`).
+- **Zoomed** by b_plus and the keypad's + (`0x6b00`) by +0.5, by b_minus and the keypad's - (`0x6d00`) by -0.5, held to 1
+  and 3 (`0x00703028`, `0x00703030`, `0x00703004`, `0x0070302c`).
+- **Drawn** by `0x005f3230`: the centre pixel is `( 15 + 480 / cells across x across, 42 + 425 / cells down x down )`
+  (`0x00703044`, `0x00703048`, `0x00703054`, `0x00703058`); the source is the screen's own size in pixels (`[0x007a1968]`,
+  `[0x007a1930]`, the resolution: `0x00449f48`..) over the zoom about it, held to 0 and the picture's size less one, and
+  truncated (`__ftol`); the destination (`0x00577970`) is the whole screen in clip space, shrunk where the source was held,
+  each held to -1..1. **One picture pixel is the zoom's screen pixels**, so the map is smaller the finer the resolution.
+  The 2D blitter puts the source's first row at the bottom: **the picture is drawn upside down** (Lost Kingdom's gate,
+  at the top of `2dmap.tga` in a viewer, is at the bottom of the map). Measured at 800 x 600, zoom 1 on (48,26): the
+  field's left at 161 pixels, its bottom at 428 (`q624/orig/a-1-open.png`).
+- **Closed** by b_okay (id -1) and by a left click on the map through `0x005f1050`: the centre held to the cells less one
+  and the camera put on `( (int)across x 10, (int)down x 10 )` (`FUN_0042aab0`, which noughts the pan's momentum and
+  leaves the zoom and turn). The click (`0x005f1d19`, the viewport's `0x10006` with button 0) first moves the centre by the
+  pointer's distance from the SCREEN's centre over `480 / cells x zoom` screen pixels a cell (y negated), and, where a
+  record was hovered (below), hands its `+0x18` to `FUN_00486920` after the close (not read). Measured: zoom 1.5, a click at layout (1218,765): 58.104,
+  26.156, the camera on (580,260). **Escape** (the key-up case `0x005f17ef`) closes it without `0x005f1050`: the camera
+  stays.
+- **The help bar** stands at the top while the map is up: the opener's `FUN_00492530( -1, 10 )` (`0x005f1015`; it moves
+  the bar's label to top 10, keeping its left), the close's `FUN_00492530( -1, -1 )` (`0x005f1256`) puts it back.
+- **The camera's table is off**: the opener hands its root to `FUN_00485b70` (`0x005f0c01`), as a park screen's.
+- **The advisor**: the opener posts line `0x130` (`FUN_00486b00`, `0x005f100d`), the close withdraws it
+  (`FUN_00486b40`). Not built here: counted `MAP_ADVISOR_LINE` (Q666).
+- **Hover**: on the viewport's `0x10001` the nearest record of the list at `+0x20080` within 5 (`0x00703040`) of the
+  pointer's picture point is kept at `+0x20060` (`0x005f198e`..`0x005f1a9a`). Not built: counted `MAP_HOVER` as the pointer comes onto the map (Q665).
+
+**OpenTPW** draws the map at the scale the original has at 800 x 600, whatever the window (a deviation: the original's
+shrinks on a finer screen), moves a per-pass amount at thirty passes a second on `Time.Delta`, and draws the source
+rectangle exactly rather than truncated. The frame `map_win` is the root's mesh (`w_map.MD2`), drawn over the picture;
+its interior's grid lies over the picture in both games.
 
 ### The map screen's stream, `0x00774da0` — walked in full
 

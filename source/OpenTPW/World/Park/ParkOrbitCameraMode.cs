@@ -190,8 +190,9 @@ public sealed class ParkOrbitCameraMode : CameraMode
 		//
 		// Not while one of the park's screens is open: opening one switches the camera's table off and clears its
 		// rows' latches (FUN_00485b70, 0x00485ccd), and the screen's handler runs the shortcuts' table alone, so no
-		// camera key is heard until it closes. The mouse still reaches the camera from the park beside the screen.
-		var keys = !UI.WindowStack.ParkScreenOpen;
+		// camera key is heard until it closes. The mouse still reaches the camera from the park beside the screen. The park
+		// map is handed to the same switch (0x005f0c01), and its own handler takes the arrow keys.
+		var keys = !UI.WindowStack.ParkScreenOpen && !UI.WindowStack.MapOpen;
 
 		if ( keys && Input.Pressed( InputButton.RotateLeft ) )
 			Yaw -= MathF.PI / 4f;

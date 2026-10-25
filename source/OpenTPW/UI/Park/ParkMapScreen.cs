@@ -1,3 +1,5 @@
+using NeoVeldrid;
+
 namespace OpenTPW.UI;
 
 /// <summary>
@@ -15,14 +17,14 @@ namespace OpenTPW.UI;
 /// any window that pauses.
 /// </para>
 /// <para>
-/// <b>The map is the shipped picture.</b> Every park carries its own 512x512 <c>2dmap.tga</c>, and the
-/// original loads the whole of it, as 8x8 tiles of 64x64. It is shown whole here too, the black border
-/// the art has included, and is not cropped to its inner field: what the original then shows of it is
-/// governed by a zoom and scroll that are not decoded. Cell (x,y) lands at pixel (16 + 5x, 43 + 5y) of
-/// that image.
+/// <b>The map is the shipped picture, and a window on the park.</b> Every park carries its own 512x512
+/// <c>2dmap.tga</c>, drawn upside down under the frame map_win at the original's scale, opened on the camera's cell
+/// and moved by the arrows, the arrow keys, the screen's edges or the right button, and zoomed by the two buttons and
+/// the keypad's + and - (<see cref="ParkMapView"/>, <c>docs/exe/hud.md</c>, "The map's view"). OK and a click on the map
+/// put the camera on the view's cell as the map closes; Escape closes it where it is.
 /// </para>
 /// <para>
-/// <b>The overlay is not built.</b> Over that picture the original paints a live 128x128 grid of
+/// <b>The overlay is not built</b> (counted, <c>MAP_OVERLAY</c>, Q664). Over that picture the original paints a live 128x128 grid of
 /// classification codes - rides, shops, sideshows, tracks, visitors and staff - each cell coloured by a
 /// three-stop ramp over a per-thing metric from 0 to 100, and its six layer switches and two radio
 /// groups (staff overlays and the metric picker) choose what it shows. Of its metrics excitement is
@@ -47,29 +49,68 @@ internal sealed class ParkMapScreen : UiWindow
 	/// <summary>Slot 4, which is what FUN_005f0b40 gives the lettering panel before colouring it yellow.</summary>
 	private const int LabelFont = 4;
 
-	private readonly MapView _view;
+	/// <summary>Where the help bar's top stands while the map is up (<c>0x005f1015</c>, <c>FUN_00492530( -1, 10 )</c>).</summary>
+	private const int HelpBarTopAtTheMap = 10;
+
+	private readonly ParkMapView _view;
+	private readonly MapPicture _picture;
+	private readonly UiControl _viewport;
+	private readonly MapArrow[] _arrows;
+
+	/// <summary>The right button went down on the map and is still held - the viewport's <c>+0x20084</c>.</summary>
+	private bool _dragging;
+
+	/// <summary>The open map, for the debug console's census; null while none is.</summary>
+	internal static ParkMapScreen? Current { get; private set; }
+
+	internal ParkMapView View => _view;
+
+	/// <summary>Where the help bar's top stands now, for the census.</summary>
+	internal int? HelpBarTop => Stack.HelpBarTop;
 
 	public ParkMapScreen( WindowStack stack ) : base( stack )
 	{
 		// The original pauses the park here and quietens the advisor - see the class remarks. Modal so
 		// that nothing behind it can be clicked, which is what putting the park's interface away
-		// (message 6 to DAT_007cb2ac) comes to here. No dimming backdrop, and the root's own mesh,
-		// map_win (w_map.MD2), is not drawn.
+		// (message 6 to DAT_007cb2ac) comes to here.
 		Pauses = true;
 		Modal = true;
 
 		// FUN_005f0b40 closes the park screen that is open before it hides the layer (0x005f0bd1).
 		ClosesParkScreen = true;
 
-		Root = new UiControl { Id = 0x980, Rect = new UiRect( 0, 0, 2047, 1537 ) };
+		var poi = ParkOrbitCameraMode.PointOfInterest;
+		var ground = ParkGround.Current;
+		_view = ParkMapView.OpenAt( poi.X, poi.Y, ground?.MapInfoWidth ?? 95, ground?.MapInfoHeight ?? 84,
+			ground?.Heightfield?.CellsX ?? 96, ground?.Heightfield?.CellsY ?? 85 );
 
-		// The map itself, and the one control with a handler of its own in the original (LAB_005f0b20).
-		// It is added first so everything else draws over it: the scroll arrows and the zoom buttons
-		// overlap its bottom-left corner, and the panels below start at y 1387 where it stops at 1364.
-		_view = Root.Add( new MapView
+		// The root wears map_win (w_map.MD2), the frame round the whole screen: the stream binds it after the metric
+		// group's close (0x007752da), so it is the root's. The picture is drawn under it, on black, by the root itself.
+		// Laid out as one piece, so on a window wider than 4:3 its controls keep to the frame, not the window's edges.
+		_picture = new MapPicture( _view )
+		{
+			Id = 0x980,
+			Rect = new UiRect( 0, 0, 2047, 1537 ),
+			Mesh = UiMesh.Get( "w_map" ),
+			HoldsChildren = true
+		};
+		Root = _picture;
+
+		// The map itself, and the one control with a handler of its own in the original (LAB_005f0b20): a left click
+		// centres the view on the cell under it and closes the map there, a right press starts the drag. It is added
+		// first so everything else is over it: the scroll arrows and the zoom buttons overlap its bottom-left corner.
+		// Its 28-point region is left as the rectangle.
+		_viewport = Root.Add( new UiControl
 		{
 			Id = 0x992,
-			Rect = new UiRect( 49, 33, 1877, 1364 )
+			Rect = new UiRect( 49, 33, 1877, 1364 ),
+			StopsPointer = true,
+			LeftClicked = CentreAndClose,
+			RightPressed = () => _dragging = GameOptions.Current.RightButtonScroll,
+
+			// The viewport's 0x10001 keeps the nearest record of the overlay's list under the pointer (0x005f198e),
+			// which a click then hands on: not built (Q665).
+			Entered = () => Unimplemented.Report( "MAP_HOVER" )
 		} );
 
 		// The two button panels and the lettering panel between them.
@@ -100,14 +141,32 @@ internal sealed class ParkMapScreen : UiWindow
 			TextColour = new UiColour( 255, 255, 0 )
 		} );
 
-		// The four scroll arrows. Each carries a seven-point hit region in the stream (op 4 sub-op 4,
-		// what UiControl.Outline takes), which is not reproduced: each takes its rectangle, and the
-		// rectangles overlap - up and down each share a square with left and right, where the
-		// later-added left and right arrows take the press.
-		Root.Add( Arrow( 0x98a, new UiRect( 80, 1079, 237, 1236 ), 263, "b_mapup", 0, -1 ) );
-		Root.Add( Arrow( 0x981, new UiRect( 80, 1236, 237, 1393 ), 264, "b_mapdn", 0, 1 ) );
-		Root.Add( Arrow( 0x984, new UiRect( 1, 1157, 158, 1315 ), 265, "b_mapleft", -1, 0 ) );
-		Root.Add( Arrow( 0x988, new UiRect( 158, 1157, 315, 1315 ), 266, "b_mapright", 1, 0 ) );
+		// The four scroll arrows, flags 0x21 (0x20 repeating). Each takes the pointer inside its seven-point region (op 4
+		// sub-op 4), a wedge from the pad's centre (158,1236) out to its arc: their rectangles overlap, and the up arrow's
+		// middle is the right arrow's corner.
+		_arrows =
+		[
+			Root.Add( new MapArrow( 0, 1 )
+			{
+				Id = 0x98a, Rect = new UiRect( 80, 1079, 237, 1236 ), HelpText = 263, Mesh = UiMesh.Get( "b_mapup" ),
+				Outline = [new( 158, 1236 ), new( 80, 1157 ), new( 121, 1134 ), new( 133, 1129 ), new( 184, 1129 ), new( 196, 1132 ), new( 237, 1157 )]
+			} ),
+			Root.Add( new MapArrow( 0, -1 )
+			{
+				Id = 0x981, Rect = new UiRect( 80, 1236, 237, 1393 ), HelpText = 264, Mesh = UiMesh.Get( "b_mapdn" ),
+				Outline = [new( 158, 1236 ), new( 237, 1315 ), new( 195, 1338 ), new( 183, 1343 ), new( 133, 1343 ), new( 121, 1340 ), new( 80, 1315 )]
+			} ),
+			Root.Add( new MapArrow( -1, 0 )
+			{
+				Id = 0x984, Rect = new UiRect( 1, 1157, 158, 1315 ), HelpText = 265, Mesh = UiMesh.Get( "b_mapleft" ),
+				Outline = [new( 158, 1236 ), new( 80, 1315 ), new( 56, 1273 ), new( 51, 1261 ), new( 51, 1210 ), new( 54, 1198 ), new( 80, 1157 )]
+			} ),
+			Root.Add( new MapArrow( 1, 0 )
+			{
+				Id = 0x988, Rect = new UiRect( 158, 1157, 315, 1315 ), HelpText = 266, Mesh = UiMesh.Get( "b_mapright" ),
+				Outline = [new( 158, 1236 ), new( 237, 1157 ), new( 261, 1199 ), new( 266, 1211 ), new( 266, 1262 ), new( 262, 1274 ), new( 237, 1315 )]
+			} )
+		];
 
 		// Zoom. The stream gives these two a CIRCULAR hit region - op 4 sub-op 2, three shorts of centre
 		// and radius, (246,1355) r28 and (61,1356) r29 - which is likewise left as the rectangle.
@@ -117,7 +176,7 @@ internal sealed class ParkMapScreen : UiWindow
 			Rect = new UiRect( 218, 1327, 275, 1384 ),
 			HelpText = 261,
 			Mesh = UiMesh.Get( "b_plus" ),
-			Clicked = () => _view.Zoom( In: true )
+			Clicked = () => _view.ZoomBy( In: true )
 		} );
 
 		Root.Add( new UiButton
@@ -126,129 +185,195 @@ internal sealed class ParkMapScreen : UiWindow
 			Rect = new UiRect( 32, 1327, 90, 1385 ),
 			HelpText = 262,
 			Mesh = UiMesh.Get( "b_minus" ),
-			Clicked = () => _view.Zoom( In: false )
+			Clicked = () => _view.ZoomBy( In: false )
 		} );
 
 		// The stream gives this one id -1 rather than a number of its own, and UIHELPTEXT row 1 -
-		// "Left-click to close this screen".
+		// "Left-click to close this screen". It closes through 0x005f1050, which puts the camera on the view.
 		Root.Add( new UiButton
 		{
 			Id = -1,
 			Rect = new UiRect( 1941, 1339, 2024, 1422 ),
 			HelpText = 1,
 			Mesh = UiMesh.Get( "b_okay" ),
-			Clicked = Close
+			Clicked = CloseOnTheView
 		} );
 
 		// The quiet stop, which is what the original takes here: Advisor_StopQuietly(1) fades his voice
 		// and throws the line away, where Hush would have him cry out. OptionsScreen is the only other
 		// thing in this game that takes it, and for the same reason.
 		Advisor.Current?.StopQuietly();
+
+		// The overlay, its switches and pickers (Q664), and the advisor's line 0x130 the opener posts (FUN_00486b00,
+		// 0x005f100d; Q666).
+		Unimplemented.Report( "MAP_OVERLAY" );
+		Unimplemented.Report( "MAP_ADVISOR_LINE" );
+
+		Stack.HelpBarTop = HelpBarTopAtTheMap;
+		Current = this;
+		Log.Info( $"Park map: opened, {_view}" );
 	}
 
-	/// <summary>One of the four scroll arrows, which nudge the view by a cell step - see <see cref="MapView"/>.</summary>
-	private UiButton Arrow( int id, UiRect rect, int helpText, string mesh, int across, int down )
-		=> new()
-		{
-			Id = id,
-			Rect = rect,
-			HelpText = helpText,
-			Mesh = UiMesh.Get( mesh ),
-			Clicked = () => _view.Scroll( across, down )
-		};
+	/// <summary>
+	/// Every pass the map is up: the held arrows, the arrow keys and the keypad's + and - (the map's key cases,
+	/// <c>0x005f16aa</c>, <c>0x005f1722</c>), and the screen's edges or the right button's drag as the Options' Scroll says
+	/// (<c>[0x0078d910]</c>, <see cref="GameOptions.RightButtonScroll"/>). Each per-pass move is taken onto
+	/// <see cref="Time.Delta"/> at thirty passes a second - see <see cref="ParkMapView"/>.
+	/// </summary>
+	protected internal override void Update()
+	{
+		var passes = ParkMapView.PassesASecond * Time.Delta;
 
-	private void Close() => Stack.Close( this );
+		// A held arrow repeats from the first pass after its press (its repeat delays are 0 and 10 ms, 0x005f0e43), and
+		// only while the pointer is on it (the button's 0x10009 and 0x10008, 0x00668dd9).
+		foreach ( var arrow in _arrows )
+		{
+			if ( arrow.Pressed && arrow.Hovered )
+				_view.Scroll( arrow.Across * ParkMapView.CellsAPass * passes, arrow.Down * ParkMapView.CellsAPass * passes );
+		}
+
+		// A key's press and each of its repeats, one cell (0x2500 left, 0x2600 up, 0x2700 right, 0x2800 down), and the
+		// keypad's + and - (0x6b00, 0x6d00).
+		if ( !Input.TextCaptured )
+		{
+			foreach ( var key in Input.KeysPressed )
+			{
+				switch ( key )
+				{
+					case Key.Left: _view.Scroll( -ParkMapView.CellsAPass, 0f ); break;
+					case Key.Right: _view.Scroll( ParkMapView.CellsAPass, 0f ); break;
+					case Key.Up: _view.Scroll( 0f, ParkMapView.CellsAPass ); break;
+					case Key.Down: _view.Scroll( 0f, -ParkMapView.CellsAPass ); break;
+					case Key.KeypadPlus: _view.ZoomBy( In: true ); break;
+					case Key.KeypadMinus: _view.ZoomBy( In: false ); break;
+				}
+			}
+		}
+
+		if ( !Input.Mouse.Right )
+			_dragging = false;
+
+		if ( GameOptions.Current.RightButtonScroll )
+		{
+			// The viewport's frame message (0x005f1913): only with the right button held from a press on the map.
+			if ( _dragging )
+			{
+				var (x, y) = PointerOnTheScreen();
+				var (across, down) = ParkMapView.RightDrag( x, y );
+				_view.Scroll( across * passes, down * passes );
+			}
+		}
+		else if ( Screen.Width > 0 && Screen.Height > 0 )
+		{
+			// The root's frame message (0x005f126b): the pointer's place on the window from 0 to 1.
+			var (across, down) = ParkMapView.EdgePush( Input.Mouse.Position.X / Screen.Width, Input.Mouse.Position.Y / Screen.Height );
+			_view.Scroll( across * passes, down * passes );
+		}
+	}
+
+	/// <summary>The pointer on the virtual screen, by the screen's own centre, which is the map's.</summary>
+	private static (float X, float Y) PointerOnTheScreen()
+		=> (VirtualScreen.ToVirtualX( Input.Mouse.Position.X, Anchor.Centre ), VirtualScreen.ToVirtualY( Input.Mouse.Position.Y, VerticalAnchor.Middle ));
+
+	/// <summary>A click on the map (0x005f1d19): the view centred on the cell under the pointer, then the close OK makes.</summary>
+	private void CentreAndClose()
+	{
+		var (x, y) = PointerOnTheScreen();
+		_view.CentreOn( x, y );
+		CloseOnTheView();
+	}
+
+	/// <summary>
+	/// <c>0x005f1050</c>: the camera put on the view's cell (<c>FUN_0042aab0</c>, which writes the point and noughts the
+	/// pan's momentum; the zoom and the turn are left), then the map closed. Escape closes it without this.
+	/// </summary>
+	private void CloseOnTheView()
+	{
+		var (x, y) = _view.CameraPoint();
+		ParkOrbitCameraMode.PointOfInterest = new Vector3( x, y, ParkOrbitCameraMode.PointOfInterest.Z );
+		Log.Info( $"Park map: closed on the view, {_view}, the camera's point ({x:0},{y:0})" );
+		Stack.Close( this );
+	}
 
 	// There is no Cancel() here: that is a box's Escape, and the map has no box. A plain Escape let go closes the map
-	// as b_okay does, from ParkFrontEnd.MenuKey (the map's own key-up case, 0x005f17ef).
+	// (the map's own key-up case, 0x005f17ef, ParkFrontEnd.MenuKey), and leaves the camera where it was.
 
 	/// <summary>
 	/// The map's own picture goes when the screen does. It is built from a stream rather than a path, so
 	/// nothing caches it and nothing else shares it - left alone it would be one more pathless texture a
-	/// scene never lets go of.
+	/// scene never lets go of. The help bar goes back to the bottom (<c>FUN_00492530( -1, -1 )</c> on message <c>0x14</c>, <c>0x005f1256</c>).
 	/// </summary>
-	protected internal override void Closed() => _view.Release();
+	protected internal override void Closed()
+	{
+		_picture.Release();
+		Stack.HelpBarTop = null;
+
+		if ( Current == this )
+			Current = null;
+	}
 
 	/// <summary>
-	/// The map picture, drawn into the viewport with the part of it that the scrolling and zooming have
-	/// arrived at.
+	/// A scroll arrow: a repeating button (<c>FUN_00668f35( 0, 10 )</c>) that moves the view while it is held. A held
+	/// button that has repeated posts no click as it is let go (<c>FUN_00668eff</c>), and the click sound plays only on
+	/// a click (<c>0x00485780</c>), so it is silent; the original's arrows answer a click with nothing.
+	/// </summary>
+	private sealed class MapArrow( int across, int down ) : UiButton
+	{
+		public int Across { get; } = across;
+
+		public int Down { get; } = down;
+
+		internal override bool Clicks => false;
+	}
+
+	/// <summary>
+	/// The root: black over the whole window, the part of the picture the view has arrived at, then the frame map_win
+	/// (w_map.MD2). The
+	/// original hides the park's own view as the map opens (message 6 to <c>DAT_007cb2ac</c>), so nothing of the park
+	/// shows round or through the picture.
 	///
 	/// <para>
-	/// The image is the park's own <c>levels/&lt;theme&gt;/2dmap.tga</c>, decoded by
-	/// <see cref="Texture"/>'s stream constructor - the same StbImageSharp path the sky's art takes. It
-	/// is drawn as one quad with a texture-coordinate rectangle, which is all the scrolling and zooming
-	/// amount to.
-	/// </para>
-	/// <para>
-	/// <b>The picture keeps its shape.</b> The viewport is 1828x1331 and the image is square, so filling
-	/// the viewport would stretch the park sideways by a third. It is fitted by whichever side runs out
-	/// first instead, which is what <see cref="VirtualScreen"/> already does with the whole interface.
-	/// </para>
-	/// <para>
-	/// <b>How far a step and a zoom go is chosen, and marked as chosen.</b> The original has these six
-	/// buttons and nothing traced says what one press is worth, so a press moves an eighth of the
-	/// visible width and the zoom doubles between 1x and 4x.
+	/// The image is the park's own <c>levels/&lt;theme&gt;/2dmap.tga</c>, decoded by <see cref="Texture"/>'s stream
+	/// constructor - the same StbImageSharp path the sky's art takes - with its rows as a viewer shows them, and drawn
+	/// as one quad with a texture rectangle (<see cref="ParkMapView.Placed"/>). The original truncates its source
+	/// rectangle to whole pixels; this draws it exactly.
 	/// </para>
 	/// </summary>
-	private sealed class MapView : UiControl
+	private sealed class MapPicture( ParkMapView view ) : UiControl
 	{
-		/// <summary>How much of the picture a press moves, as a fraction of what is on screen - a choice.</summary>
-		private const float Step = 0.125f;
-
-		private const float MinZoom = 1f;
-		private const float MaxZoom = 4f;
-
 		private Texture? _map;
+		private Texture? _black;
 		private bool _tried;
-
-		private float _zoom = MinZoom;
-		private float _x = 0.5f;
-		private float _y = 0.5f;
-
-		internal void Scroll( int across, int down )
-		{
-			var visible = 1f / _zoom;
-
-			_x = Math.Clamp( _x + (across * Step * visible), visible * 0.5f, 1f - (visible * 0.5f) );
-			_y = Math.Clamp( _y + (down * Step * visible), visible * 0.5f, 1f - (visible * 0.5f) );
-		}
-
-		internal void Zoom( bool In )
-		{
-			_zoom = Math.Clamp( In ? _zoom * 2f : _zoom * 0.5f, MinZoom, MaxZoom );
-
-			// Re-centre inside the new window, so zooming out at an edge does not leave the view off the
-			// picture.
-			Scroll( 0, 0 );
-		}
 
 		internal void Release()
 		{
 			_map?.Delete();
 			_map = null;
+			_black?.Delete();
+			_black = null;
 		}
 
 		protected override void OnDraw()
 		{
-			if ( Load() is not { } map )
-				return;
-
-			var visible = 1f / _zoom;
-			var uvs = new Rectangle( _x - (visible * 0.5f), _y - (visible * 0.5f), visible, visible );
-
-			// Fitted rather than stretched - see the class remarks. The picture is square, the viewport
-			// is not, so the shorter side decides and the rest is left as it was.
-			var area = Pixels;
-			var side = MathF.Min( area.Width, area.Height );
-			var placed = new Rectangle(
-				area.X + ((area.Width - side) * 0.5f),
-				area.Y + ((area.Height - side) * 0.5f),
-				side, side );
-
-			Material.UI.Set( "Color", map );
+			_black ??= new Texture( [0, 0, 0, 255], 1, 1 );
+			Material.UI.Set( "Color", _black );
 
 			using ( _ = new Graphics.Scope( Screen.Size ) )
-				Graphics.Quad( placed, uvs, Material.UI );
+				Graphics.Quad( new Rectangle( 0, 0, Screen.Width, Screen.Height ), Material.UI );
+
+			if ( Load() is { } map )
+			{
+				var (layout, texture) = view.Placed;
+				var pixels = VirtualScreen.ToPixels( layout, Anchor.Centre, VerticalAnchor.Middle );
+
+				Material.UI.Set( "Color", map );
+
+				// Graphics.Quad's window is y-up, where a control's pixels are y-down.
+				using ( _ = new Graphics.Scope( Screen.Size ) )
+					Graphics.Quad( new Rectangle( pixels.X, Screen.Height - pixels.Y - pixels.Height, pixels.Width, pixels.Height ), texture, Material.UI );
+			}
+
+			base.OnDraw();
 		}
 
 		/// <summary>
