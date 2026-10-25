@@ -10013,6 +10013,23 @@ here is current**: each entry is frozen at the commit that ticked it. Grep it by
   of a pixel; `parkscene.circle()`/`circles()` read its line again (the origin pixel had broken them since Q475). New
   tool: `original/staffpair.py`. Mutations 9 of 9 caught (`q628/mutations.py`). Harness `~/.cache/tpw-harnesses/q628/`
   (`PREDICTION.txt` 12 held, 1 missed and recorded, round b void; `side-by-side.png`).
+- [x] **Q629. A poor park won a golden ticket for happiness.** From Alexah's play test, 2026-10-21 (note 22). The
+  original's test is local 2: average happiness above `Happiness` and people in the park above
+  `AtLeastThisManyHappyPeople` (`ride-operation.md:3866`); ours is `source/OpenTPW/World/Park/ParkGoldenTickets.cs:89`.
+  The nearest known cause is Q148's average counting guests the original leaves out (QUEUE:267-276; inferred).
+  Reproduce: take the average, the guest count and both thresholds at the award; compare with the original's count on
+  the same save. Confirm: a log line with each number, predicted first.
+  **Done (2026-10-25), measured: the original's own award, nothing to change.** The ticket won was not Local 2: Alexah's
+  profile of that play (`save/users/1AlexahMae/gms.dat`, `lib/gmsfile.py`) holds jungle Local 0 alone, the visitors'
+  ticket, which Lost Kingdom gives at 101 visitors to date (`Visitors` 100). Its tag says "for getting 100 visitors to
+  your park"; *happy* is in the first ticket's second line, `0x13b`, sample 598, the original's words. Local 2's mean
+  already counts only the guests on cells of kind 0, 1, 3, 9 or 10 (`GuestsInsideHappiness`): the inferred Q148 cause is
+  the gauge's, not the tickets'. Measured with the stock park played as Full Simulation by a profile with no ticket:
+  the original set Local 0 on tick 7500 (visitors 98 then 107, 28 inside, mean 40.75, Local 2 unset); ours awarded it
+  on 7400 (100 then 104, 25 inside, 36.28, the year's profit -15353), posted `0xd7` line 0, `0x137`, `0x13b`, said 293,
+  589, 598 and stood tag 102 with the original's text (`ride-operation.md`, "Golden tickets"; `q629/side-by-side.png`).
+  New: `original/ticketmeasures.py`; a recipe in `TOOLING.md`. Evidence `~/.cache/tpw-harnesses/q629/` (PREDICTION.txt
+  9 held, 2 missed with their causes).
 ## B. Docs and comments
 
 - [x] **Q88. One label from Q50's decode.** Done 2026-09-26, `alexah/163-q88-heldbyathing-state8-label`.

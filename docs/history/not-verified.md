@@ -5,6 +5,10 @@ newest first. The pre-commit hook (`tools/status-sweep.py`) moves an item's acco
 written above it. **Grep it by Q-number; never read it whole.** Each account is frozen at its item's date: a
 later item may have run what an earlier one lists as untested.
 
+- Q628 (the staff click range measured; the pick's circle taken in the original's 4:3 frame): the original
+  off-screen and ours on the desktop at 1280 x 720, Lost Kingdom's stock park, one pair of staff each (Mike Man and
+  Duke Mighten), the clock held. Not looked at: a window narrower than 4:3 and other wide shapes (the tests' 960 x 960
+  and 2000 x 1200 alone), Alexah's own maximised window, a guest's picture, and the pick while people walk.
 - Q627 (the vehicles' visits measured; nothing changed but a debug log line): both games on Lost Kingdom, Instant
   Action, the original off-screen and ours on the desktop at 1280 x 720, one run of each scene. Not looked at: Full
   Simulation (the same manager and summons, not run), the other themes, a park the player has grown over hours (the

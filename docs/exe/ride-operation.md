@@ -3891,6 +3891,20 @@ one the park holds (`FUN_005af7f0(i)`); the Globals have no such test, because t
 (`saves.md`, "Keys and tickets", for its four results and the record that moves between parks). Only index 0 of the
 Secret is ever awarded (`FUN_005afb00`'s one caller, `0x004d4a84`), so nothing found sets `+0x27`.
 
+**A poor park's first ticket is Local 0, the visitors', in both games** (Q629, Alexah's play test of 2026-10-21, note 22:
+"a poor park won a golden ticket for happiness"). Their profile of that play (`gms.dat`, `lib/gmsfile.py`) holds one
+ticket, jungle Local 0, not Local 2. Lost Kingdom's `Visitors` is 100, cumulative, with Halloween's the lowest of the four themes (FileFormats
+`sam.md`), so any park that has let 101 in wins it however unhappy; Local 2 asks a mean over 75 **and** over 150 inside, and
+its mean is already the counted guests' alone (`ParkPeople.GuestsInsideHappiness`, `FUN_004c7bb0`; Q148's open term is the
+gauge's and the music's, not the tickets'). The ticket's own tag says "for getting 100 visitors to your park" (tag 102,
+`TAG_SYSTEM.str` row 180); the word *happy* is in the first ticket's second line, `0x13b`, sample 598 ("...get lots of
+people in the park all at once or make them really happy..."). **Measured:** the stock park (`Easymode.TPWI`, 8 visitors
+to date) played as Full Simulation by a profile with no ticket, nothing done to it: the original read visitors 98 on tick
+7400 and 107 on 7500, where Local 0's flag was set (28 inside, a mean of 40.75, Local 2 unset; `original/ticketmeasures.py`,
+`progress.py`, `tags.py`); ours read 100 on 7300 and 104 on 7400, where it logged "Won a Local golden ticket (type - 1,
+num - 0)" (25 inside, 36.28; the year's profit -15353), posted `0xd7` line 0, `0x137` and `0x13b`, said samples 293, 589
+and 598, and stood tag 102 with the original's text. Nothing to change (`q629/`).
+
 **Telling the world.** `FUN_004d4fa0` (Local), `FUN_004d5270` (Global) and `FUN_004d5870` (Secret), each reached only
 from its checker, take the ticket index and the award's result, log "Won a ... golden ticket", and post one advisor
 message through `FUN_0059b590`: results 1, 2, 3 (ticket; ticket and key; ticket, key and park) post `0xd7`-`0xd9`

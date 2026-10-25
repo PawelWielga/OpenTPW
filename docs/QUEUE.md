@@ -74,12 +74,6 @@ The review of the run of 2026-10-16/17 put Q444 to Q446 first (done; its finding
 The review of the run of 2026-10-17/18 (its findings are `~/.cache/tpw-harnesses/handoff/review3/`, `VERIFY-<n>.md`)
 filed the items that cite it.
 
-- [ ] **Q629. A poor park won a golden ticket for happiness.** From Alexah's play test, 2026-10-21 (note 22). The
-  original's test is local 2: average happiness above `Happiness` and people in the park above
-  `AtLeastThisManyHappyPeople` (`ride-operation.md:3866`); ours is `source/OpenTPW/World/Park/ParkGoldenTickets.cs:89`.
-  The nearest known cause is Q148's average counting guests the original leaves out (QUEUE:267-276; inferred).
-  Reproduce: take the average, the guest count and both thresholds at the award; compare with the original's count on
-  the same save. Confirm: a log line with each number, predicted first.
 - [ ] **Q630. The key animation at park entry is not seen. Decode first.** From Alexah's play test, 2026-10-21 (note 2).
   Built for Full Simulation from the lobby: effect 98 at the price
   (`source/OpenTPW/UI/FrontEnd/Screens/IslandPanel.cs:325-337`; the original `lobby.md:55, :140-141, :531`, game type 0
@@ -440,8 +434,6 @@ filed the items that cite it.
   established, which the disassembly does not bear out. Build the filter once for both, and for `HeadingForExit`'s
   change of mind when it is built. Confirm: the Belly Bounce full, the music level and the gauge read before and
   after, predicted first; a screenshot of the gauge.
-  - **Note (play test 2026-10-21, note 22):** a poor park won a golden ticket for happiness; Q629 reproduces it, this
-    item's guest count is the nearest known cause (inferred).
 - [ ] **Q150. Scripts and the thing sweep take a frame's ticks in two loops, where the original takes both per tick.**
   Found by the 2026-09-26 staleness audit. The original's park loop runs the scripts (`0x0054f56b`) and the thing
   sweep (`0x0054f7bb`) inside one loop over the frame's ticks. `ParkRides` and `ParkPeople` each loop over
