@@ -79,6 +79,13 @@ filed the items that cite it.
   drafter; `CARRY_PREVIEW_MARKERS` and Q541 (QUEUE:1523) are the nearby code. Reproduce from the Queue button and from a
   ride's hand-over, find which marker set is drawn, fix it. Confirm: a screenshot beside the original's with the tool
   log.
+  **Needs Alexah (2026-10-25):** not reproduced in four rounds of real clicks on the stock park and a fresh Full
+  Simulation park (`q633/PREDICTION.txt`): after a ride's hand-over and from its window's queue button ours shows the
+  queue tool's own blue squares and rope pointer, as the original's frames do, and lays railed queue; the one route into
+  the path tool found is a click whose run has a red square, which puts the queue tool away, so the next click on grass
+  picks up the path tool, as the original's does (`0x00524a63`). What did you see? (a) right after placing a ride, the
+  squares or pointer looked like the path tool's; (b) after a click the queue tool was gone and further clicks laid path;
+  (c) path pieces appeared where you laid queue; (d) something else - please describe.
 - [ ] **Q634. In the shop and ride windows the cursor is hidden behind the 3D model preview.** From Alexah's play test,
   2026-10-21 (note 15). Nothing in the docs or queue; not reproduced. Find the draw order of the preview's pass against
   the pointer's (the pointer is drawn last in the original: decode first where). Confirm: a screenshot with the pointer
